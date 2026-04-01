@@ -5,71 +5,71 @@ health-data-platform/
 ├── backend/
 │   ├── app/
 │   │   ├── __init__.py
-│   │   ├── main.py                 # 应用入口
+│   │   ├── main.py                 # entry
 │   │   ├── api/
 │   │   │   ├── __init__.py
 │   │   │   ├── v1/
 │   │   │   │   ├── __init__.py
-│   │   │   │   ├── api.py          # 路由汇总
-│   │   │   │   └── endpoints/
+│   │   │   │   ├── api.py          # route summary
+│   │   │   │   └── endpoints/  # handle http requests
 │   │   │   │       ├── __init__.py
-│   │   │   │       ├── health.py   # 健康数据 API
-│   │   │   │       ├── users.py    # 用户 API
-│   │   │   │       ├── alerts.py   # 告警 API
-│   │   │   │       └── analytics.py # 分析 API
-│   │   │   └── deps.py             # 依赖注入
+│   │   │   │       ├── health.py   # health data API
+│   │   │   │       ├── users.py    # users API
+│   │   │   │       ├── alerts.py   # alert API
+│   │   │   │       └── analytics.py # analysis API
+│   │   │   └── deps.py             # dependency injection
 │   │   ├── crud/
 │   │   │   ├── __init__.py
-│   │   │   ├── base.py             # 基础 CRUD
+│   │   │   ├── base.py             # basic CRUD Generic approach
 │   │   │   ├── crud_user.py
 │   │   │   ├── crud_health_data.py
 │   │   │   └── crud_alert.py
 │   │   ├── models/
 │   │   │   ├── __init__.py
-│   │   │   ├── base.py
-│   │   │   ├── user.py             # User ORM 模型
-│   │   │   ├── health.py           # HealthData ORM 模型
-│   │   │   └── alert.py            # Alert ORM 模型
+│   │   │   ├── base.py             # 
+│   │   │   ├── user.py             # User ORM model
+│   │   │   ├── health.py           # HealthData ORM model
+│   │   │   └── alert.py            # Alert ORM model
 │   │   ├── schemas/
 │   │   │   ├── __init__.py
-│   │   │   ├── user.py             # User Pydantic 模型
-│   │   │   ├── health.py           # HealthData Pydantic 模型
-│   │   │   └── alert.py            # Alert Pydantic 模型
+│   │   │   ├── user.py             # User Pydantic model
+│   │   │   ├── health.py           # HealthData Pydantic model
+│   │   │   └── alert.py            # Alert Pydantic model
 │   │   ├── services/
 │   │   │   ├── __init__.py
-│   │   │   ├── health_service.py   # 健康数据处理逻辑
-│   │   │   ├── alert_service.py    # 告警规则逻辑
-│   │   │   └── s3_service.py       # AWS S3 文件上传
+│   │   │   ├── health_service.py   # health data processing logic
+│   │   │   ├── alert_service.py    # alert rule logic
+│   │   │   └── s3_service.py       # AWS S3 file upload
 │   │   ├── core/
 │   │   │   ├── __init__.py
-│   │   │   ├── config.py           # 配置管理
-│   │   │   ├── security.py         # JWT + 密码处理
-│   │   │   ├── constants.py        # 常量
-│   │   │   └── exceptions.py       # 自定义异常
+│   │   │   ├── config.py           # configuration management
+│   │   │   ├── security.py         # JWT + password processing
+│   │   │   ├── constants.py        # Constant
+│   │   │   └── exceptions.py       # Custom Exception
 │   │   ├── db/
 │   │   │   ├── __init__.py
-│   │   │   ├── base.py             # Base 类
-│   │   │   ├── session.py          # 数据库连接
-│   │   │   └── init_db.py          # 初始化数据库
+│   │   │   ├── base.py             # Base class
+│   │   │   ├── session.py          # define database connection
+│   │   │   └── init_db.py          # create table and insert initial data
 │   │   ├── middleware/
 │   │   │   ├── __init__.py
-│   │   │   ├── logging.py          # 日志中间件
-│   │   │   └── cors.py             # CORS 配置
+│   │   │   ├── logging.py          # log middleware
+│   │   │   └── cors.py             # CORS configuration
 │   │   └── utils/
 │   │       ├── __init__.py
-│   │       ├── logger.py           # 日志工具
-│   │       └── validators.py       # 数据验证工具
+│   │       ├── logger.py           # log tools
+│   │       └── validators.py       # data validation tools
 │   ├── tests/
 │   │   ├── __init__.py
-│   │   ├── conftest.py             # Pytest 配置
-│   │   ├── test_api.py
-│   │   └── test_services.py
-│   ├── migrations/                 # Alembic 数据库迁移
-│   │   ├── alembic.ini
-│   │   ├── env.py
-│   │   └── versions/
-│   ├── .env.example                # 环境变量示例
-│   ├── requirements.txt            # Python 依赖
+│   │   ├── conftest.py             # Pytest configuration
+│   │   ├── test_api.py.            # endpoint tests
+│   │   └── test_services.py.       # service logic tests
+│   ├── migrations/                 # Alembic database version control
+│   │   ├── alembic.ini             # configuration
+│   │   ├── env.py                  # connect to models
+│   │   └── versions/         
+│   ├── .env.example                # env example
+│   ├── requirements.txt            # Python dependency
 │   ├── Dockerfile
 │   ├── docker-compose.yml
 │   ├── pytest.ini
@@ -92,7 +92,7 @@ health-data-platform/
 │   │   │   ├── useAuth.js
 │   │   │   └── useHealthData.js
 │   │   ├── services/
-│   │   │   └── api.js              # Axios 实例
+│   │   │   └── api.js              # Axios
 │   │   ├── store/
 │   │   │   └── store.js            # Zustand store
 │   │   ├── styles/
@@ -108,27 +108,27 @@ health-data-platform/
 │   └── README.md
 │
 ├── infra/
-│   ├── docker-compose.yml          # 本地开发环境
-│   ├── docker-compose.prod.yml     # 生产环境
+│   ├── docker-compose.yml          # local dev env
+│   ├── docker-compose.prod.yml     # production env
 │   ├── aws/
-│   │   ├── terraform/              # IaC 配置（可选）
+│   │   ├── terraform/              # IaC configuration
 │   │   └── README.md
 │   └── README.md
 │
 ├── docs/
-│   ├── ARCHITECTURE.md             # 架构设计文档
-│   ├── API.md                      # API 文档
-│   ├── DEPLOYMENT.md               # 部署指南
-│   ├── DATABASE.md                 # 数据库设计
-│   └── CONTRIBUTING.md             # 贡献指南
+│   ├── ARCHITECTURE.md             # architecture design document
+│   ├── API.md                      # API document
+│   ├── DEPLOYMENT.md               # infrastructure guideline
+│   ├── DATABASE.md                 # database design
+│   └── CONTRIBUTING.md             # contribution guideline
 │
 ├── .github/
 │   └── workflows/
-│       ├── backend-ci.yml          # 后端 CI/CD
-│       └── frontend-ci.yml         # 前端 CI/CD
+│       ├── backend-ci.yml          # backend CI/CD
+│       └── frontend-ci.yml         # frontend CI/CD
 │
 ├── .gitignore
-├── README.md                       # 项目总述
+├── README.md                       # Project Overview
 └── LICENSE
 ```
 
