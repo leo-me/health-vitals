@@ -67,7 +67,7 @@ health-data-platform/
 │   ├── migrations/                 # Alembic database version control
 │   │   ├── alembic.ini             # configuration
 │   │   ├── env.py                  # connect to models
-│   │   └── versions/         
+│   │   └── versions/
 │   ├── .env.example                # env example
 │   ├── requirements.txt            # Python dependency
 │   ├── Dockerfile
