@@ -11,10 +11,10 @@ class SensorType(enum.Enum):
   ACCELEROMETER = 'accelerometer'
 
 
-class SensorRecordings(Base):
+class SensorRecording(Base):
   __tablename__ = "sensor_recordings"
   id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-  device_id = Column(UUID(as_uuid=True), ForeignKey("device.id"), nullable=True)
+  device_id = Column(UUID(as_uuid=True), ForeignKey("devices.id"), nullable=True)
   user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
   timestamp = Column(DateTime, default=datetime.utcnow)
   sensor_type = Column(Enum(SensorType), nullable=False)

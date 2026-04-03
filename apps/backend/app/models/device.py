@@ -13,7 +13,7 @@ class DeviceType(enum.Enum):
 
 
 class Device(Base):
-  __tablename__ = "device"
+  __tablename__ = "devices"
   id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
   user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
   type = Column(Enum(DeviceType), nullable=False) # sensor watch 或者 手机

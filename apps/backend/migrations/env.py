@@ -1,6 +1,7 @@
 
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from logging.config import fileConfig
@@ -11,7 +12,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from app.db.base import Base
-from app.models import user, alert, device, sensor_recordings
+from app.models import user, alert, device, sensor_recording
 
 
 
