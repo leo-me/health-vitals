@@ -14,8 +14,9 @@ class SensorType(enum.Enum):
 class SensorRecording(Base):
   __tablename__ = "sensor_recordings"
   id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-  device_id = Column(UUID(as_uuid=True), ForeignKey("devices.id"), nullable=True)
-  user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+  device_id = Column(UUID(as_uuid=True), ForeignKey("devices.id"), nullable=False, index=True)
+  user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
   timestamp = Column(DateTime, default=datetime.utcnow)
   sensor_type = Column(Enum(SensorType), nullable=False)
   data = Column(JSONB, nullable=False)
+  created_at = Column(DateTime, default=datetime.utcnow)
