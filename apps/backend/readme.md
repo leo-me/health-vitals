@@ -42,7 +42,16 @@ alembic init alembic # create default alembic folder
 3. run script to generation file: alembic revision --autogenerate -m "create core tables"
 4. create table script:  alembic upgrade head
 
+# update table
+1. generate version file:
+    ```
+    alembic revision --autogenerate -m "update users email and password"
+    ```
+2. update postgres table
 
+   ```
+   alembic upgrade head
+   ```
 
 
 
