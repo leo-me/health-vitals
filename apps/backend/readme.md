@@ -6,10 +6,15 @@ pip install fastapi "uvicorn[standard]"
 
 ```
 
+# update requirements.txt
+pip freeze > requirements.txt
+
+
 
 # how to start the server
 
-cd backend
+# root folder ?
+cd apps/backend
 
 source venv/bin/activate
 
@@ -21,8 +26,7 @@ uvicorn app.main:app --reload
 
 pip install sqlalchemy psycopg2-binary
 
-# update requirements.txt
-pip freeze > requirements.txt
+
 
 
 use models to create table

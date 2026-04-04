@@ -20,7 +20,7 @@ class User(Base):
   __tablename__ = "users"
   id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
   email = Column(String(30), nullable=False)
-  password=Column(String(12), nullable=False)
+  password=Column(String(60), nullable=False)
   name = Column(String(40), nullable=True)
   sex = Column(Enum(SexEnum), nullable=True)
   age = Column(Integer, nullable=True)

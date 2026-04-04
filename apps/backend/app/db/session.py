@@ -1,11 +1,13 @@
- # Define database connection and Base class
-
-
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from app.core.config import settings
 
-engine = create_engine("postgresql://user:password@localhost/db")
-SessionLocal = sessionmaker(bind=engine)
+engine = create_engine(settings.DATABASE_URL)
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
-Base = declarative_base()    # ← 核心 core
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
