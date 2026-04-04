@@ -14,8 +14,15 @@ from app.core.security import hash_password
 def get_user(db: Session, user_id: UUID) -> User | None:
     return db.query(User).filter(User.id == user_id).first()
 
+def get_user_email(db: Session, user_email: str) -> str | None:
+    return db.query(User).filter(User.email == user_email).first()
 
-def create_user(db:Session, data: UserCreate) -> User:
+
+def create_user(db: Session, data: UserCreate) -> User:
+    existing = get_user_email(db, data.email)
+    if existing:
+        raise ValueError("Email already registered")
+
     user = User(
         email = data.email,
         password=hash_password(data.password)
