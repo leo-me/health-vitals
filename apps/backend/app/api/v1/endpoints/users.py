@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from uuid import UUID
 from sqlalchemy.orm import Session
 
-from app.schemas.user import UserResponse, UserCreate, UpdateUser
+from app.schemas.user import UserResponse, UserCreate, UserUpdate
 from app.db.session import get_db
 from app.crud import crud_user as crud
 
@@ -25,7 +25,7 @@ def create_user(data: UserCreate, db: Session=Depends(get_db)):
       raise HTTPException(status_code=409, detail=str(e))
 
 @router.patch("/{user_id}", response_model=UserResponse)
-def update_user(user_id: UUID, data: UpdateUser, db: Session=Depends(get_db)):
+def update_user(user_id: UUID, data: UserUpdate, db: Session=Depends(get_db)):
   user = crud.update_user(db, user_id, data)
   if not user:
     raise HTTPException(status_code=404, detail='User not found')

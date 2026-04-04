@@ -28,7 +28,7 @@ class UserResponse(BaseModel):     # user info
 
 
 
-class UpdateUser(BaseModel):  # update user info
+class UserUpdate(BaseModel):  # update user info
     name: Optional[str] = None
     sex: Optional[SexEnum] = None
     age: Optional[int] = None

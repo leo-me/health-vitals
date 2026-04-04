@@ -6,7 +6,7 @@
 # crud_user = CRUDUser(User)              # ← 传入 model 就够了
 from sqlalchemy.orm import Session
 from app.models.user import User
-from app.schemas.user import UserCreate, UpdateUser
+from app.schemas.user import UserCreate, UserUpdate
 from uuid import UUID
 from app.core.security import hash_password
 
@@ -43,7 +43,7 @@ def delete_user(db: Session, user_id: UUID) -> bool:
 
 
 
-def update_user(db: Session, user_id: UUID, data: UpdateUser) -> User | None:
+def update_user(db: Session, user_id: UUID, data: UserUpdate) -> User | None:
     user = get_user(db, user_id)
     if not user:
         return None
