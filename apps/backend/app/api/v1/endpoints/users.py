@@ -7,7 +7,7 @@ from app.db.session import get_db
 from app.crud import crud_user as crud
 
 from app.models.user import User
-from dependencies import get_current_user
+from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
 

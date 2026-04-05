@@ -21,18 +21,15 @@ def get_alerts_by_user(user_id: str, current_user: User = Depends(get_current_us
 
 
 @router.get("/{alert_id}", response_model=AlertResponse)
-def get_alert(alert_id: UUID, db: Session = Depends(get_db)):
+def get_alert(alert_id: UUID, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
   alert = crud.get_alert(db, alert_id)
   if not alert:
     raise HTTPException(status_code=404, detail="Alert not found")
   return alert
 
 
-  
-
-
 @router.post("/", response_model=AlertResponse)
-def create_alert(data: AlertCreate, db: Session = Depends(get_db)):
+def create_alert(data: AlertCreate, current_user: User = Depends(get_current_user),  db: Session = Depends(get_db)):
   try:
     return crud.create_alert(db, data)
   except ValueError as e:

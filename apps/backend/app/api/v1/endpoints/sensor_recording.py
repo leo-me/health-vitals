@@ -13,7 +13,7 @@ from app.db.session import get_db
 
 from app.services.alert_service import check_and_trigger_alert
 from app.models.user import User
-from dependencies import get_current_user
+from app.dependencies import get_current_user
 
 
 router = APIRouter(prefix="/sensor_recordings", tags=["sensor_recording"])
