@@ -12,6 +12,8 @@ from app.crud import crud_device
 from app.db.session import get_db
 
 from app.services.alert_service import check_and_trigger_alert
+from app.models.user import User
+from dependencies import get_current_user
 
 
 router = APIRouter(prefix="/sensor_recordings", tags=["sensor_recording"])
@@ -22,6 +24,7 @@ router = APIRouter(prefix="/sensor_recordings", tags=["sensor_recording"])
 @router.get('/user/{user_id}', response_model=list[SensorRecordingResponse])
 def get_sensor_recording_by_user(
   user_id: UUID,
+  current_user: User=Depends(get_current_user),
   sensor_type: SensorType | None = Query(default=None),
   start: datetime | None = Query(default=None), # like 2026-04-05T00:00:00
   end: datetime | None = Query(default=None),
@@ -38,14 +41,22 @@ def get_sensor_recording_by_user(
 
 
 @router.get('/device/{device_id}', response_model=list[SensorRecordingResponse])
-def get_sensor_recording_by_device(device_id: UUID, db: Session=Depends(get_db)):
+def get_sensor_recording_by_device(
+  device_id: UUID,  
+  current_user: User=Depends(get_current_user),
+  db: Session=Depends(get_db)
+):
   recordings = crud.get_recordings_by_device(db, device_id)
   if not recordings:
     raise HTTPException(status_code=404, detail='Recording not found')
   return recordings
 
 @router.get('/{recording_id}', response_model=SensorRecordingResponse)
-def get_sensor_recording(recording_id: UUID, db: Session=Depends(get_db)):
+def get_sensor_recording(
+  recording_id: UUID,   
+  current_user: User=Depends(get_current_user),
+  db: Session=Depends(get_db)
+ ):
   recording = crud.get_sensor_recording(db, recording_id)
   if not recording:
     raise HTTPException(status_code=404, detail='Recording not found')
@@ -53,7 +64,11 @@ def get_sensor_recording(recording_id: UUID, db: Session=Depends(get_db)):
 
 
 @router.post('/', response_model=SensorRecordingResponse)
-def create_sensor_recording(data: SensorRecordingCreate, db: Session=Depends(get_db)):
+def create_sensor_recording(
+  data: SensorRecordingCreate,
+  current_user: User=Depends(get_current_user),
+  db: Session=Depends(get_db)
+):
   recording = crud.create_sensor_recording(db, data)
 
   alert = check_and_trigger_alert(db, recording)

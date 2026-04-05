@@ -11,7 +11,7 @@ from uuid import UUID
 from app.core.security import hash_password
 
 
-def get_user(db: Session, user_id: UUID) -> User | None:
+def get_user_by_id(db: Session, user_id: UUID) -> User | None:
     return db.query(User).filter(User.id == user_id).first()
 
 def get_user_by_email(db: Session, user_email: str) -> User:
@@ -34,7 +34,7 @@ def create_user(db: Session, data: UserCreate) -> User:
 
 
 def delete_user(db: Session, user_id: UUID) -> bool:
-    user = get_user(db, user_id)
+    user = get_user_by_id(db, user_id)
     if not user:
         return False
     db.delete(user)
@@ -44,7 +44,7 @@ def delete_user(db: Session, user_id: UUID) -> bool:
 
 
 def update_user(db: Session, user_id: UUID, data: UserUpdate) -> User | None:
-    user = get_user(db, user_id)
+    user = get_user_by_id(db, user_id)
     if not user:
         return None
     for key, val in data.model_dump(exclude_none=True).items():

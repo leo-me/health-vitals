@@ -7,13 +7,16 @@ from app.schemas.alert import AlertResponse, AlertCreate
 from app.db.session import get_db
 from app.crud import crud_alert  as crud
 
+from app.dependencies import get_current_user
+from app.models.user import User
+
 
 
 router = APIRouter(prefix="/alert", tags=["alerts"])
 
 
 @router.get("/user/{user_id}", response_model=list[AlertResponse])
-def get_alerts_by_user(user_id: str, db: Session = Depends(get_db)):
+def get_alerts_by_user(user_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
   return crud.get_alerts_by_user(db, user_id)
 
 
