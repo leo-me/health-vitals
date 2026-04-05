@@ -18,7 +18,7 @@ def get_device(device_id: UUID, db: Session=Depends(get_db)):
   return device
 
 @router.get('/user/{user_id}', response_model=list[DeviceResponse])
-def get_device(user_id: UUID, db: Session=Depends(get_db)):
+def get_devices_by_user(user_id: UUID, db: Session=Depends(get_db)):
   device = crud.get_devices_by_user(db, user_id)
   if not device:
     raise HTTPException(status_code=404, detail='Device not found')

@@ -1,5 +1,6 @@
+from datetime import datetime
 from uuid import UUID
-from app.models.sensor_recording import SensorRecording
+from app.models.sensor_recording import SensorRecording, SensorType
 from app.schemas.sensor_recording import SensorRecordingCreate
 
 
@@ -22,9 +23,32 @@ def get_sensor_recording(db: Session, recording_id: UUID) -> SensorRecording:
 
 
 
-def get_recordings_by_user(db: Session, user_id: UUID)  -> list[SensorRecording]: #← 按用户查，返回列表
-  return db.query(SensorRecording).filter(SensorRecording.user_id == user_id).all()
+def get_recordings_by_user(
+  db: Session,
+  user_id: UUID,
+  start: datetime | None = None,
+  end: datetime | None = None,
+  page: int = 1,
+  page_size: int  = 10,
+  sensor_type: SensorType | None = None
+)  -> list[SensorRecording]: #← search by user and return list
+  query =  db.query(SensorRecording).filter(SensorRecording.user_id == user_id)
 
-def get_recordings_by_device(db: Session, device_id: UUID) ->list[SensorRecording]:    #← 按设备查，返回
+  if sensor_type is not None:
+    query = query.filter(SensorRecording.sensor_type == sensor_type)
+
+  if start is not None:
+    query = query.filter(SensorRecording.timestamp >= start)
+
+  if end is not None:
+    query = query.filter(SensorRecording.timestamp <= end)
+
+  results = query.offset((page - 1)*page_size).limit(page_size).all()
+
+  return results
+
+
+
+def get_recordings_by_device(db: Session, device_id: UUID) ->list[SensorRecording]:    #← search by device and return list
   return db.query(SensorRecording).filter(SensorRecording.device_id == device_id).all()
 
