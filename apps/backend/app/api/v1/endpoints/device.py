@@ -6,7 +6,7 @@ from app.schemas.device import DeviceResponse, DeviceCreate, DeviceUpdate
 from app.crud import crud_device as crud
 from app.db.session import get_db
 
-from app.models.user import User
+from app.models.user import User, UserTypeEnum
 from app.dependencies import get_current_user
 
 
@@ -20,8 +20,12 @@ def get_device(
   db: Session=Depends(get_db)
 ):
   device = crud.get_device(db, device_id)
+
   if not device:
     raise HTTPException(status_code=404, detail='Device not found')
+  elif current_user.id != device.user_id and current_user.user_type != UserTypeEnum.ADMIN:
+    raise HTTPException(status_code=403, detail="No permission")
+
   return device
 
 @router.get('/user/{user_id}', response_model=list[DeviceResponse])
@@ -30,22 +34,29 @@ def get_devices_by_user(
   current_user: User=Depends(get_current_user),
   db: Session=Depends(get_db)
 ):
+  if current_user.id != user_id and current_user.user_type != UserTypeEnum.ADMIN:
+    raise HTTPException(status_code=403, detail="No permission")
+
   device = crud.get_devices_by_user(db, user_id)
+
   if not device:
     raise HTTPException(status_code=404, detail='Device not found')
+
   return device
 
 
 @router.post("/", response_model=DeviceResponse)
-def create_device(
+def register_device(
   data: DeviceCreate,
   current_user: User=Depends(get_current_user),
   db: Session=Depends(get_db)
 ):
-    try:
-      return crud.create_device(db, data)
-    except ValueError as e:
-      raise HTTPException(status_code=409, detail=str(e))
+  if current_user.user_type == UserTypeEnum.ADMIN:
+    data.user_id = current_user.id
+
+  return crud.upsert_device(db, data)
+
+
 
 @router.patch("/{device_id}", response_model=DeviceResponse)
 def update_device(
