@@ -12,7 +12,7 @@ from app.crud import crud_device
 from app.db.session import get_db
 
 from app.services.alert_service import check_and_trigger_alert
-from app.models.user import User
+from app.models.user import User, UserTypeEnum
 from app.dependencies import get_current_user
 
 
@@ -32,7 +32,12 @@ def get_sensor_recording_by_user(
   page_size: int = Query(default=10),
   db: Session=Depends(get_db)
   ):
+
+  if current_user.id != user_id and current_user.user_type != UserTypeEnum.ADMIN:
+    raise HTTPException(status_code=403, detail="No permission")
+
   recordings = crud.get_recordings_by_user(db, user_id, start, end, page, page_size, sensor_type)
+
 
   # if not recordings:
   #   raise HTTPException(status_code=404, detail='Recording not found')
@@ -46,20 +51,36 @@ def get_sensor_recording_by_device(
   current_user: User=Depends(get_current_user),
   db: Session=Depends(get_db)
 ):
+  device = crud_device.get_device(db, device_id)
+  
+  if not device:
+    raise HTTPException(status_code=404, detail='Device not found')
+
+  if current_user.id != device.user_id and current_user.user_type != UserTypeEnum.ADMIN:
+    raise HTTPException(status_code=403, detail="No permission")
+
   recordings = crud.get_recordings_by_device(db, device_id)
+
   if not recordings:
     raise HTTPException(status_code=404, detail='Recording not found')
+
+
   return recordings
 
 @router.get('/{recording_id}', response_model=SensorRecordingResponse)
 def get_sensor_recording(
-  recording_id: UUID,   
+  recording_id: UUID,
   current_user: User=Depends(get_current_user),
   db: Session=Depends(get_db)
  ):
   recording = crud.get_sensor_recording(db, recording_id)
+  
   if not recording:
     raise HTTPException(status_code=404, detail='Recording not found')
+
+  if recording.user_id != current_user.id and current_user.user_type != UserTypeEnum.ADMIN:
+    raise HTTPException(status_code=403, detail="No permission")
+
   return recording
 
 
@@ -69,6 +90,10 @@ def create_sensor_recording(
   current_user: User=Depends(get_current_user),
   db: Session=Depends(get_db)
 ):
+  if current_user.user_type != UserTypeEnum.ADMIN:
+    data.user_id = current_user.id
+
+
   recording = crud.create_sensor_recording(db, data)
 
   alert = check_and_trigger_alert(db, recording)

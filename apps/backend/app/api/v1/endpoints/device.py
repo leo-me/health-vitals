@@ -51,7 +51,7 @@ def register_device(
   current_user: User=Depends(get_current_user),
   db: Session=Depends(get_db)
 ):
-  if current_user.user_type == UserTypeEnum.ADMIN:
+  if current_user.user_type != UserTypeEnum.ADMIN:
     data.user_id = current_user.id
 
   return crud.upsert_device(db, data)
@@ -65,14 +65,28 @@ def update_device(
   current_user: User=Depends(get_current_user),
   db: Session=Depends(get_db)
 ):
-  device = crud.update_device(db, device_id, data)
+
+  device = crud.get_device(db, device_id)
+
   if not device:
     raise HTTPException(status_code=404, detail='Device not found')
-  return device
+
+  if device.user_id != current_user.id and current_user.user_type != UserTypeEnum.ADMIN:
+    raise HTTPException(status_code=403, detail='No permission')
+
+  update = crud.update_device(db, device_id, data)
+
+  return update
 
 @router.delete("/{device_id}")
 def delete_device(device_id: UUID, current_user: User=Depends(get_current_user), db: Session=Depends(get_db)):
-  success = crud.delete_device(db, device_id)
-  if not success:
+  device = crud.get_device(db, device_id)
+  if not device:
     raise HTTPException(status_code=404, detail='Device not found')
+
+  if device.user_id != current_user.id and current_user.user_type != UserTypeEnum.ADMIN:
+    raise HTTPException(status_code=403, detail='No permission')
+
+  crud.delete_device(db, device_id)
+
   return {"message": 'Device deleted'}

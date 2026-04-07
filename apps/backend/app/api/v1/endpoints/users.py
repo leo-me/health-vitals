@@ -6,7 +6,7 @@ from app.schemas.user import UserResponse, UserCreate, UserUpdate
 from app.db.session import get_db
 from app.crud import crud_user as crud
 
-from app.models.user import User
+from app.models.user import User, UserTypeEnum
 from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -15,6 +15,9 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(user_id: UUID, current_user: User = Depends(get_current_user), db: Session=Depends(get_db)):
+  if user_id != current_user.id and current_user.user_type != UserTypeEnum.ADMIN:
+     raise HTTPException(status_code=403, detail='No permission')
+
   user = crud.get_user_by_id(db, user_id)
   if not user:
     raise HTTPException(status_code=404, detail='User not found')
@@ -27,16 +30,27 @@ def create_user(data: UserCreate, db: Session=Depends(get_db)):
     except ValueError as e:
       raise HTTPException(status_code=409, detail=str(e))
 
+
 @router.patch("/{user_id}", response_model=UserResponse)
 def update_user(user_id: UUID, data: UserUpdate, current_user: User = Depends(get_current_user), db: Session=Depends(get_db)):
-  user = crud.update_user(db, user_id, data)
-  if not user:
+  if user_id != current_user.id and current_user.user_type != UserTypeEnum.ADMIN:
+    raise HTTPException(status_code=403, detail='No permission')
+
+  update = crud.update_user(db, user_id, data)
+
+  if not update:
     raise HTTPException(status_code=404, detail='User not found')
-  return user
+
+  return update
 
 @router.delete("/{user_id}")
 def delete_user(user_id: UUID, current_user: User = Depends(get_current_user), db: Session=Depends(get_db)):
+  if current_user.user_type != UserTypeEnum.ADMIN:
+    raise HTTPException(status_code=403, detail='No permission')
+
   success = crud.delete_user(db, user_id)
+
   if not success:
     raise HTTPException(status_code=404, detail='User not found')
+
   return {"message": 'User deleted'}
