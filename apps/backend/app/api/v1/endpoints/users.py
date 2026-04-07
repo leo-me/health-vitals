@@ -7,7 +7,7 @@ from app.db.session import get_db
 from app.crud import crud_user as crud
 
 from app.models.user import User, UserTypeEnum
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, require_admin
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -44,10 +44,11 @@ def update_user(user_id: UUID, data: UserUpdate, current_user: User = Depends(ge
   return update
 
 @router.delete("/{user_id}")
-def delete_user(user_id: UUID, current_user: User = Depends(get_current_user), db: Session=Depends(get_db)):
-  if current_user.user_type != UserTypeEnum.ADMIN:
-    raise HTTPException(status_code=403, detail='No permission')
-
+def delete_user(
+  user_id: UUID, 
+  _: User = Depends(require_admin), 
+  db: Session=Depends(get_db)
+):
   success = crud.delete_user(db, user_id)
 
   if not success:
