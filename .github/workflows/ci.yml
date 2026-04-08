@@ -17,11 +17,16 @@ jobs:
           POSTGRES_DB: health_db_test
         ports:
           - 5432:5432 # host port: container port container port — expose db to the runner so pytest can connect via localhost
+
+        # check if PostgreSQL is ready to accept connections, r
+        # un the health check every 10 seconds
+        # each check times out after 5 seconds,
+        # fail the container after 5 consecutive failures
         options: >- 
-          --health-cmd pg_isready    # check if PostgreSQL is ready to accept connections
-          --health-interval 10s      # run the health check every 10 seconds
-          --health-timeout 5s        # each check times out after 5 seconds
-          --health-retries 5         # fail the container after 5 consecutive failures
+          --health-cmd pg_isready    # 
+          --health-interval 10s      # 
+          --health-timeout 5s        # 
+          --health-retries 5         # 
 
 
 
