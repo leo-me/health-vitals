@@ -22,11 +22,11 @@ jobs:
         # un the health check every 10 seconds
         # each check times out after 5 seconds,
         # fail the container after 5 consecutive failures
-        options: >- 
-          --health-cmd pg_isready    # 
-          --health-interval 10s      # 
-          --health-timeout 5s        # 
-          --health-retries 5         # 
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
 
 
