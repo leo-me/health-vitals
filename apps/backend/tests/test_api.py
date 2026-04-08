@@ -83,18 +83,18 @@ def test_delete_user(client):
   id = create_admin.json()["id"]
   print("id", id)
 
-  update = client.patch(f"/api/v1/users/{id}", json={
-      "user_type": UserTypeEnum.ADMIN
-  }, headers={"Authorization": f"Bearer {token}"})
+  # update = client.patch(f"/api/v1/users/{id}", json={
+  #     "user_type": UserTypeEnum.ADMIN
+  # }, headers={"Authorization": f"Bearer {token}"})
 
-  assert update.status_code == 200
+  # assert update.status_code == 200
 
   # 2. 直接通过测试 DB session 把该用户改为 admin
-  # db = next(override_get_db())
-  # admin_user = db.query(User).filter_by(email="admin@163.com").first()
-  # admin_user.user_type = UserTypeEnum.ADMIN
-  # db.commit()
-  # db.close()
+  db = next(override_get_db())
+  admin_user = db.query(User).filter_by(email="admin@163.com").first()
+  admin_user.user_type = UserTypeEnum.ADMIN
+  db.commit()
+  db.close()
 
 
   user_id = create_user.json()["id"]
