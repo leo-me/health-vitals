@@ -45,8 +45,8 @@ def update_user(user_id: UUID, data: UserUpdate, current_user: User = Depends(ge
 
 @router.delete("/{user_id}")
 def delete_user(
-  user_id: UUID, 
-  _: User = Depends(require_admin), 
+  user_id: UUID,
+  _: User = Depends(require_admin),
   db: Session=Depends(get_db)
 ):
   success = crud.delete_user(db, user_id)

@@ -1,4 +1,34 @@
-## About this project
+# About this project
+This is a prototype for health platform, which use
+
+这是一个health platform，通过sensor 来获取 health data，并使用 ML 训练数据 并用来预测病人的pressure情况，提醒caregiver，帮助病人。
+
+
+
+# Tech stack
+
+backend
+- python
+- FastAPI
+- PostgreSQL
+- SQLAlchemy
+- Alembic
+- JWT
+
+frontend
+
+- React
+- NextJS
+- Tailwind css
+
+infrastructure
+
+- Github Action
+- 
+
+
+# Function list
+
 
 
 
@@ -19,9 +49,10 @@ health-data-platform/
 │   │   │   │   ├── api.py          # route summary
 │   │   │   │   └── endpoints/  # handle http requests
 │   │   │   │       ├── __init__.py
-│   │   │   │       ├── health.py   # health data API
+│   │   │   │       ├── sensor_recording.py   # sensor data API
 │   │   │   │       ├── users.py    # users API
 │   │   │   │       ├── alerts.py   # alert API
+│   │   │   │       ├── device.py   # device API
 │   │   │   │       └── analytics.py # analysis API
 │   │   │   └── deps.py             # dependency injection
 │   │   ├── crud/
@@ -74,8 +105,9 @@ health-data-platform/
 │   │   ├── alembic.ini             # configuration
 │   │   ├── env.py                  # connect to models
 │   │   └── versions/
-│   ├── .env.example                # env example
+│   ├── .env                        # env
 │   ├── requirements.txt            # Python dependency
+│   ├── dependencies.py             # dependency injection
 │   ├── Dockerfile
 │   ├── docker-compose.yml
 │   ├── pytest.ini
@@ -138,3 +170,10 @@ health-data-platform/
 └── LICENSE
 ```
 
+
+# Quick start
+
+
+
+
+# API Document
