@@ -1,6 +1,6 @@
 # schemas/user.py
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 from uuid import UUID
 from datetime import datetime
 from app.models.user import UserTypeEnum, SexEnum
@@ -9,7 +9,7 @@ from app.models.user import UserTypeEnum, SexEnum
 
 
 class UserCreate(BaseModel):       # create user
-    email: str
+    email: EmailStr
     password: str
 
 class UserResponse(BaseModel):     # user info

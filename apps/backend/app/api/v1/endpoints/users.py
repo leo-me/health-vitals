@@ -33,6 +33,11 @@ def create_user(data: UserCreate, db: Session=Depends(get_db)):
 
 @router.patch("/{user_id}", response_model=UserResponse)
 def update_user(user_id: UUID, data: UserUpdate, current_user: User = Depends(get_current_user), db: Session=Depends(get_db)):
+  
+  # 用户刚注册，user_type 是普通用户，他只能改自己的信息（user_id ==
+  # current_user.id）。所以修自己的 user_type 为 ADMIN
+  # 从权限上看是放行的，但这是个安全漏洞 —— 你得确认 UserUpdate schema
+  # 是否允许修改 user_type 字段。
   if user_id != current_user.id and current_user.user_type != UserTypeEnum.ADMIN:
     raise HTTPException(status_code=403, detail='No permission')
 
