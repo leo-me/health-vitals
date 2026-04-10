@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import uuid
 
 from app.main import app
 from app.db.session import get_db
@@ -72,3 +73,11 @@ def admin_token(client, admin_user):
         "password": "adminpass"
     })
     return res.json()["access_token"]
+
+@pytest.fixture
+def recording_ids():
+  return {
+    "id": str(uuid.uuid4()),
+    "device_id": str(uuid.uuid4()),
+    "user_id": str(uuid.uuid4())
+  }
