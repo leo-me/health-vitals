@@ -6,6 +6,9 @@ from sqlalchemy.orm import sessionmaker
 from app.main import app
 from app.db.session import get_db
 from app.db.base import Base
+from app.models.user import User, UserTypeEnum
+from app.core.security import hash_password
+
 
 TEST_DATABASE_URL = "postgresql://postgres:0000@localhost:5432/health_db_test"
 
@@ -13,6 +16,7 @@ TEST_DATABASE_URL = "postgresql://postgres:0000@localhost:5432/health_db_test"
 test_engine = create_engine(TEST_DATABASE_URL)
 
 TestSessionLocal = sessionmaker(bind=test_engine, autoflush=False, autocommit=False)
+
 
 
 def override_get_db():
@@ -40,3 +44,31 @@ def client():
   # 4. delete table  and clear dependency_override when test finished
   Base.metadata.drop_all(bind=test_engine)
   app.dependency_overrides.clear()
+
+@pytest.fixture
+def db(client):
+    session = TestSessionLocal()
+    yield session
+    session.close()
+
+@pytest.fixture
+def admin_user(db):
+    user = User(
+        email="admin@163.com",
+        password=hash_password("adminpass"),
+        user_type=UserTypeEnum.ADMIN
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    yield user
+    db.delete(user)
+    db.commit()
+
+@pytest.fixture
+def admin_token(client, admin_user):
+    res = client.post("/api/v1/auth/login", data={
+        "username": admin_user.email,
+        "password": "adminpass"
+    })
+    return res.json()["access_token"]

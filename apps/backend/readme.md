@@ -59,4 +59,9 @@ alembic init alembic # create default alembic folder
 
 
 
+# how to run test
 
+```bash
+   source venv/bin/activate
+   pytest tests/test_api.py -v
+```
