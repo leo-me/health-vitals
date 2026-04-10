@@ -1,0 +1,15 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "Dashboard, User Management",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm start"
+  },
+  "keywords": [
+    "healthcare",
+    "dashboard"
+  ],
+  "author": "Leo",
+  "license": "ISC"
+}

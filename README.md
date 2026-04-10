@@ -1,40 +1,50 @@
-# About this project
-This is a prototype for health platform, which use
+ # health_vitals
 
-这是一个health platform，通过sensor 来获取 health data，并使用 ML 训练数据 并用来预测病人的pressure情况，提醒caregiver，帮助病人。
+health_vitals is the backend service powering  — a wearable-based platform for stress monitoring and prediction in patients with dementia or persistent physical symptoms.
 
+The healthcare project has completed its initial research cycle, validating design requirements through prototype development and early-stage evaluation. This backend service supports the next phase of that work: reliable data ingestion from wearable sensors, structured storage, and delivery of stress-related health signals to clinical consumers.
 
-
-# Tech stack
-
-backend
-- python
-- FastAPI
-- PostgreSQL
-- SQLAlchemy
-- Alembic
-- JWT
-
-frontend
-
-- React
-- NextJS
-- Tailwind css
-
-infrastructure
-
-- Github Action
-- 
+It handles sensor data ingestion, user management, alert triggering, and role-based access control — built with **FastAPI** + **PostgreSQL**, containerized with Docker, and designed for integration with wearable devices and downstream ML prediction services.
 
 
-# Function list
+## Tech Stack
+
+**Backend**
+
+| Layer | Technology |
+|---|---|
+| Framework | FastAPI |
+| Database | PostgreSQL 16 |
+| ORM | SQLAlchemy |
+| Migrations | Alembic |
+| Auth | JWT (HS256) |
+| Testing | pytest |
+| Containerization | Docker + Docker Compose |
+| CI | GitHub Actions |
+
+**Frontend** *(planned — not yet implemented)*
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js (React) |
+| Styling | Tailwind CSS |
+| State Management | Zustand |
+| HTTP Client | Axios |
+
+---
+
+## System Architecture
+
+The diagram below shows the full Sensors2Care platform architecture. The `health_vitals` service functions as the core backend, receiving data from sensors via the mobile app and EventHub, persisting recordings and alerts, and exposing APIs to the web dashboard and third-party consumers.
+
+> ⚠️ Architecture diagram is a work in progress and will be updated as the project evolves.
+
+![System Architecture](./docs/architecture/workflow.drawio.svg)
+
+---
 
 
-
-
-
-
-## file architecture
+# file architecture
 
 ```
 health-data-platform/
@@ -171,7 +181,110 @@ health-data-platform/
 ```
 
 
-# Quick start
+
+
+# backend
+
+
+## About
+
+A backend REST API service for the Sensors2Care platform, handling sensor data ingestion, user management, alert triggering, and role-based access control.
+
+Built with **FastAPI** + **PostgreSQL**, containerized with Docker, and designed for integration with wearable health monitoring devices.
+
+---
+
+
+
+## Getting Started
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/)
+
+### Run Locally
+
+```bash
+git clone https://github.com/your-username/health_vitals.git
+cd health_vitals
+docker-compose up --build
+```
+
+This will:
+1. Start a PostgreSQL 16 database
+2. Run Alembic migrations automatically
+3. Launch the FastAPI app at **http://localhost:8000**
+
+API docs available at: **http://localhost:8000/docs**
+
+---
+
+## API Examples
+
+### 1. Login
+
+```http
+POST /auth/login
+Content-Type: application/x-www-form-urlencoded
+
+username=admin@example.com&password=secret
+```
+
+**Response:**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+---
+
+### 2. Create a Sensor Recording
+
+```http
+POST /sensor-recordings/
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "device_id": 1,
+  "heart_rate": 95,
+  "spo2": 97.5,
+  "recorded_at": "2026-04-10T10:00:00"
+}
+```
+
+---
+
+### 3. Trigger an Alert (auto or manual)
+
+```http
+POST /alerts/
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "patient_id": 3,
+  "alert_type": "high_heart_rate",
+  "severity": "warning",
+  "message": "Heart rate exceeded threshold: 95 bpm"
+}
+```
+
+---
+
+## Role-Based Access Control
+
+| Role | Permissions |
+|---|---|
+| `admin` | Full access |
+| `doctor` | Read/write patient data and alerts |
+| `patient` | Read own data only |
+
+---
+
 
 
 
