@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: secrets
+    environment: production
 
 
     services:
@@ -14,7 +14,7 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_USER: ${{vars.POSTGRES_USER}}
-          POSTGRES_PASSWORD: ${{vars.POSTGRES_PASSWORD}}
+          POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASSWORD}}
           POSTGRES_DB: ${{vars.TEST_POSTGRES_DB}}
         ports:
           - 5432:5432 # host port: container port container port — expose db to the runner so pytest can connect via localhost
@@ -46,8 +46,8 @@ jobs:
       - name: Run tests
         working-directory: apps/backend
         env:
-          DATABASE_URL: ${{vars.TEST_DATABASE_URL}}
-          SECURITY_KEY: test_secret_key
+          DATABASE_URL: ${{secrets.TEST_DATABASE_URL}}
+          SECURITY_KEY: ${{secrets.TEST_SECURITY_KEY}}
           ALGORITHM: ${{vars.ALGORITHM}}
           ACCESS_TOKEN_EXPIRE_MINUTES: ${{vars.ACCESS_TOKEN_EXPIRE_MINUTES}}
         run: pytest tests/ -v
