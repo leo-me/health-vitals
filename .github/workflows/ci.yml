@@ -52,16 +52,23 @@ jobs:
           ACCESS_TOKEN_EXPIRE_MINUTES: ${{vars.ACCESS_TOKEN_EXPIRE_MINUTES}}
         run: pytest tests/ -v
 
-      - name: Deploy
-        env:
-          POSTGRES_USER: ${{ vars.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB: ${{ vars.POSTGRES_DB }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SECURITY_KEY: ${{ secrets.SECURITY_KEY }}
-          ALGORITHM: ${{ vars.ALGORITHM }}
-          ACCESS_TOKEN_EXPIRE_MINUTES: ${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }}
-        run: docker compose up -d
-
       - name: Build Docker image
         run: docker build apps/backend/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        working-directory: apps/backend
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl deploy --remote-only
