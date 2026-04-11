@@ -11,14 +11,14 @@ pip freeze > requirements.txt
 
 
 
-# how to start the server
+# how to start the server local 
 
-# root folder ?
+# root folder 
 cd apps/backend
 
 source venv/bin/activate
 
-uvicorn app.main:app --reload
+ENV_FILE=.env.dev uvicorn app.main:app --reload
 
 
 
