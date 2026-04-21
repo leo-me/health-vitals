@@ -5,3 +5,5 @@ venv/
 init_docs/
 
 .env*
+
+mlruns/ 

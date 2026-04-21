@@ -14,13 +14,16 @@ pip freeze > requirements.txt
 # how to start the server local 
 
 # root folder 
+```sh
 cd apps/backend
 
 source venv/bin/activate
 
 ENV_FILE=.env.dev uvicorn app.main:app --reload
 
+docker compose up --build 
 
+```
 
 # postgresSQL 
 

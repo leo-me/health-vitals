@@ -1,10 +1,11 @@
  # health_vitals
+Health_vitals design for a healthcare project. It handles sensor data ingestion, user management, alert triggering, and role-based access control — built with **FastAPI** + **PostgreSQL**, containerized with Docker, and designed for integration with wearable devices and downstream ML prediction services.
 
-health_vitals is the backend service powering  — a wearable-based platform for stress monitoring and prediction in patients with dementia or persistent physical symptoms.
+
+# background
+ This wearable-based platform for stress monitoring and prediction in patients with dementia or persistent physical symptoms.
 
 The healthcare project has completed its initial research cycle, validating design requirements through prototype development and early-stage evaluation. This backend service supports the next phase of that work: reliable data ingestion from wearable sensors, structured storage, and delivery of stress-related health signals to clinical consumers.
-
-It handles sensor data ingestion, user management, alert triggering, and role-based access control — built with **FastAPI** + **PostgreSQL**, containerized with Docker, and designed for integration with wearable devices and downstream ML prediction services.
 
 
 ## Tech Stack
@@ -125,36 +126,38 @@ health-data-platform/
 │   └── README.md
 │
 ├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── DataTable.jsx
-│   │   │   ├── ChartWidget.jsx
-│   │   │   └── UserMenu.jsx
-│   │   ├── pages/
-│   │   │   ├── LoginPage.jsx
-│   │   │   ├── DashboardPage.jsx
-│   │   │   ├── AnalyticsPage.jsx
-│   │   │   └── SettingsPage.jsx
-│   │   ├── hooks/
-│   │   │   ├── useAuth.js
-│   │   │   └── useHealthData.js
-│   │   ├── services/
-│   │   │   └── api.js              # Axios
-│   │   ├── store/
-│   │   │   └── store.js            # Zustand store
-│   │   ├── styles/
-│   │   │   └── tailwind.css
-│   │   ├── App.jsx
-│   │   └── main.jsx
+│   ├── app/
+│   │   ├── layout.jsx              # Root layout
+│   │   ├── page.jsx                # Home / redirect to login
+│   │   ├── login/
+│   │   │   └── page.jsx
+│   │   ├── dashboard/
+│   │   │   └── page.jsx
+│   │   ├── analytics/
+│   │   │   └── page.jsx
+│   │   └── settings/
+│   │       └── page.jsx
+│   ├── components/
+│   │   ├── Dashboard.jsx
+│   │   ├── DataTable.jsx
+│   │   ├── ChartWidget.jsx
+│   │   └── UserMenu.jsx
+│   ├── hooks/
+│   │   ├── useAuth.js
+│   │   └── useHealthData.js
+│   ├── services/
+│   │   └── api.js
+│   ├── store/
+│   │   └── store.js
+│   ├── styles/
+│   │   └── globals.css
 │   ├── public/
 │   ├── .env.example
 │   ├── package.json
-│   ├── vite.config.js
+│   ├── next.config.js
 │   ├── tailwind.config.js
 │   ├── Dockerfile
 │   └── README.md
-│
 ├── infra/
 │   ├── docker-compose.yml          # local dev env
 │   ├── docker-compose.prod.yml     # production env
@@ -193,6 +196,10 @@ A backend REST API service for the Sensors2Care platform, handling sensor data i
 Built with **FastAPI** + **PostgreSQL**, containerized with Docker, and designed for integration with wearable health monitoring devices.
 
 ---
+
+# frontend
+
+A web dashboard  designed for clinician or caregiver to manage the health vitals of the patients, Which provides patient management, trends, and alert records.
 
 
 
