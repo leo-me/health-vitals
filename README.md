@@ -124,7 +124,18 @@ health-data-platform/
 │   ├── pytest.ini
 │   ├── .gitignore
 │   └── README.md
-│
+├── consumer_delivery/
+│   ├── main.py              #  FastAPI entry
+│   ├── api/
+│   │   └── v1/
+│   │       └── stress.py    # consumer endpoint
+│   ├── services/
+│   │   └── delivery.py      # get data from backend, format data
+│   ├── schemas/
+│   │   └── output.py        # Consumer-facing's response schema (Decoupled from backend)
+│   ├── core/
+│   │   └── config.py
+│   └── Dockerfile
 ├── frontend/
 │   ├── app/
 │   │   ├── layout.jsx              # Root layout
@@ -194,6 +205,12 @@ health-data-platform/
 A backend REST API service for the Sensors2Care platform, handling sensor data ingestion, user management, alert triggering, and role-based access control.
 
 Built with **FastAPI** + **PostgreSQL**, containerized with Docker, and designed for integration with wearable health monitoring devices.
+
+---
+
+# Consumer Delivery Layer
+
+The Consumer Delivery Layer is a lightweight FastAPI service responsible for exposing processed health insights to end users. It sits at the outermost edge of the health vitals platform, consuming inference results produced by the backend pipeline and serving them through a clean, versioned REST API.
 
 ---
 
