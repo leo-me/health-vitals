@@ -36,3 +36,13 @@ uvicorn main:app --reload --port 8001
 
 
 
+
+# implementation sequence
+adapters (base) → schemas →  service → config → api → main
+
+1. adapters/               - implement concrete adapters(inheriting base adapter)
+2. schemas/output.py       - define output contracts for per consumer
+3. services/delivery.py    - coordinate all adapters through the base interface
+4. core/config.py          - consumer configuration
+5. api/v1/                 - wire endpoints, no logic here
+6. main.py                 - register and inject adapters at startup

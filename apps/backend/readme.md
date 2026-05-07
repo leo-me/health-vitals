@@ -30,8 +30,6 @@ docker compose up --build
 pip install sqlalchemy psycopg2-binary
 
 
-
-
 use models to create table
 
 # create table with alembic
@@ -59,7 +57,6 @@ alembic init alembic # create default alembic folder
    ```
    alembic upgrade head
    ```
-
 
 
 # how to run test
