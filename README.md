@@ -47,152 +47,152 @@ The diagram below shows the full Sensors2Care platform architecture. The `health
 
 # file architecture
 
-```
-health-data-platform/
-├── backend/
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py                 # entry
-│   │   ├── api/
-│   │   │   ├── __init__.py
-│   │   │   ├── v1/
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── api.py          # route summary
-│   │   │   │   └── endpoints/  # handle http requests
-│   │   │   │       ├── __init__.py
-│   │   │   │       ├── sensor_recording.py   # sensor data API
-│   │   │   │       ├── users.py    # users API
-│   │   │   │       ├── alerts.py   # alert API
-│   │   │   │       ├── device.py   # device API
-│   │   │   │       └── analytics.py # analysis API
-│   │   │   └── deps.py             # dependency injection
-│   │   ├── crud/
-│   │   │   ├── __init__.py
-│   │   │   ├── base.py             # basic CRUD Generic approach
-│   │   │   ├── crud_user.py
-│   │   │   ├── crud_health_data.py
-│   │   │   └── crud_alert.py
-│   │   ├── models/
-│   │   │   ├── __init__.py
-│   │   │   ├── base.py             # 
-│   │   │   ├── user.py             # User ORM model
-│   │   │   ├── health.py           # HealthData ORM model
-│   │   │   └── alert.py            # Alert ORM model
-│   │   ├── schemas/
-│   │   │   ├── __init__.py
-│   │   │   ├── user.py             # User Pydantic model
-│   │   │   ├── health.py           # HealthData Pydantic model
-│   │   │   └── alert.py            # Alert Pydantic model
-│   │   ├── services/
-│   │   │   ├── __init__.py
-│   │   │   ├── health_service.py   # health data processing logic
-│   │   │   ├── alert_service.py    # alert rule logic
-│   │   │   └── s3_service.py       # AWS S3 file upload
-│   │   ├── core/
-│   │   │   ├── __init__.py
-│   │   │   ├── config.py           # configuration management
-│   │   │   ├── security.py         # JWT + password processing
-│   │   │   ├── constants.py        # Constant
-│   │   │   └── exceptions.py       # Custom Exception
-│   │   ├── db/
-│   │   │   ├── __init__.py
-│   │   │   ├── base.py             # Base class
-│   │   │   ├── session.py          # define database connection
-│   │   │   └── init_db.py          # create table and insert initial data
-│   │   ├── middleware/
-│   │   │   ├── __init__.py
-│   │   │   ├── logging.py          # log middleware
-│   │   │   └── cors.py             # CORS configuration
-│   │   └── utils/
-│   │       ├── __init__.py
-│   │       ├── logger.py           # log tools
-│   │       └── validators.py       # data validation tools
-│   ├── tests/
-│   │   ├── __init__.py
-│   │   ├── conftest.py             # Pytest configuration
-│   │   ├── test_api.py.            # endpoint tests
-│   │   └── test_services.py.       # service logic tests
-│   ├── migrations/                 # Alembic database version control
-│   │   ├── alembic.ini             # configuration
-│   │   ├── env.py                  # connect to models
-│   │   └── versions/
-│   ├── .env                        # env
-│   ├── requirements.txt            # Python dependency
-│   ├── dependencies.py             # dependency injection
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   ├── pytest.ini
-│   ├── .gitignore
-│   └── README.md
-├── consumer_delivery/
-│   ├── main.py              #  FastAPI entry
-│   ├── api/
-│   │   └── v1/
-│   │       └── stress.py    # consumer endpoint
-│   ├── services/
-│   │   └── delivery.py      # get data from backend, format data
-│   ├── schemas/
-│   │   └── output.py        # Consumer-facing's response schema (Decoupled from backend)
-│   ├── core/
-│   │   └── config.py
-│   └── Dockerfile
-├── frontend/
-│   ├── app/
-│   │   ├── layout.jsx              # Root layout
-│   │   ├── page.jsx                # Home / redirect to login
-│   │   ├── login/
-│   │   │   └── page.jsx
-│   │   ├── dashboard/
-│   │   │   └── page.jsx
-│   │   ├── analytics/
-│   │   │   └── page.jsx
-│   │   └── settings/
-│   │       └── page.jsx
-│   ├── components/
-│   │   ├── Dashboard.jsx
-│   │   ├── DataTable.jsx
-│   │   ├── ChartWidget.jsx
-│   │   └── UserMenu.jsx
-│   ├── hooks/
-│   │   ├── useAuth.js
-│   │   └── useHealthData.js
-│   ├── services/
-│   │   └── api.js
-│   ├── store/
-│   │   └── store.js
-│   ├── styles/
-│   │   └── globals.css
-│   ├── public/
-│   ├── .env.example
-│   ├── package.json
-│   ├── next.config.js
-│   ├── tailwind.config.js
-│   ├── Dockerfile
-│   └── README.md
-├── infra/
-│   ├── docker-compose.yml          # local dev env
-│   ├── docker-compose.prod.yml     # production env
-│   ├── aws/
-│   │   ├── terraform/              # IaC configuration
-│   │   └── README.md
-│   └── README.md
-│
-├── docs/
-│   ├── ARCHITECTURE.md             # architecture design document
-│   ├── API.md                      # API document
-│   ├── DEPLOYMENT.md               # infrastructure guideline
-│   ├── DATABASE.md                 # database design
-│   └── CONTRIBUTING.md             # contribution guideline
-│
-├── .github/
-│   └── workflows/
-│       ├── backend-ci.yml          # backend CI/CD
-│       └── frontend-ci.yml         # frontend CI/CD
-│
-├── .gitignore
-├── README.md                       # Project Overview
-└── LICENSE
-```
+  ```
+  apps/
+  ├── backend/
+  │   ├── app/
+  │   │   ├── __init__.py
+  │   │   ├── main.py                 # entry
+  │   │   ├── api/
+  │   │   │   ├── __init__.py
+  │   │   │   ├── v1/
+  │   │   │   │   ├── __init__.py
+  │   │   │   │   ├── api.py          # route summary
+  │   │   │   │   └── endpoints/  # handle http requests
+  │   │   │   │       ├── __init__.py
+  │   │   │   │       ├── sensor_recording.py   # sensor data API
+  │   │   │   │       ├── users.py    # users API
+  │   │   │   │       ├── alerts.py   # alert API
+  │   │   │   │       ├── device.py   # device API
+  │   │   │   │       └── analytics.py # analysis API
+  │   │   │   └── deps.py             # dependency injection
+  │   │   ├── crud/
+  │   │   │   ├── __init__.py
+  │   │   │   ├── base.py             # basic CRUD Generic approach
+  │   │   │   ├── crud_user.py
+  │   │   │   ├── crud_health_data.py
+  │   │   │   └── crud_alert.py
+  │   │   ├── models/
+  │   │   │   ├── __init__.py
+  │   │   │   ├── base.py             # 
+  │   │   │   ├── user.py             # User ORM model
+  │   │   │   ├── health.py           # HealthData ORM model
+  │   │   │   └── alert.py            # Alert ORM model
+  │   │   ├── schemas/
+  │   │   │   ├── __init__.py
+  │   │   │   ├── user.py             # User Pydantic model
+  │   │   │   ├── health.py           # HealthData Pydantic model
+  │   │   │   └── alert.py            # Alert Pydantic model
+  │   │   ├── services/
+  │   │   │   ├── __init__.py
+  │   │   │   ├── health_service.py   # health data processing logic
+  │   │   │   ├── alert_service.py    # alert rule logic
+  │   │   │   └── s3_service.py       # AWS S3 file upload
+  │   │   ├── core/
+  │   │   │   ├── __init__.py
+  │   │   │   ├── config.py           # configuration management
+  │   │   │   ├── security.py         # JWT + password processing
+  │   │   │   ├── constants.py        # Constant
+  │   │   │   └── exceptions.py       # Custom Exception
+  │   │   ├── db/
+  │   │   │   ├── __init__.py
+  │   │   │   ├── base.py             # Base class
+  │   │   │   ├── session.py          # define database connection
+  │   │   │   └── init_db.py          # create table and insert initial data
+  │   │   ├── middleware/
+  │   │   │   ├── __init__.py
+  │   │   │   ├── logging.py          # log middleware
+  │   │   │   └── cors.py             # CORS configuration
+  │   │   └── utils/
+  │   │       ├── __init__.py
+  │   │       ├── logger.py           # log tools
+  │   │       └── validators.py       # data validation tools
+  │   ├── tests/
+  │   │   ├── __init__.py
+  │   │   ├── conftest.py             # Pytest configuration
+  │   │   ├── test_api.py.            # endpoint tests
+  │   │   └── test_services.py.       # service logic tests
+  │   ├── migrations/                 # Alembic database version control
+  │   │   ├── alembic.ini             # configuration
+  │   │   ├── env.py                  # connect to models
+  │   │   └── versions/
+  │   ├── .env                        # env
+  │   ├── requirements.txt            # Python dependency
+  │   ├── dependencies.py             # dependency injection
+  │   ├── Dockerfile
+  │   ├── docker-compose.yml
+  │   ├── pytest.ini
+  │   ├── .gitignore
+  │   └── README.md
+  ├── consumer_delivery/
+  │   ├── main.py              #  FastAPI entry
+  │   ├── api/
+  │   │   └── v1/
+  │   │       └── stress.py    # consumer endpoint
+  │   ├── services/
+  │   │   └── delivery.py      # get data from backend, format data
+  │   ├── schemas/
+  │   │   └── output.py        # Consumer-facing's response schema (Decoupled from backend)
+  │   ├── core/
+  │   │   └── config.py
+  │   └── Dockerfile
+  ├── frontend/
+  │   ├── app/
+  │   │   ├── layout.jsx              # Root layout
+  │   │   ├── page.jsx                # Home / redirect to login
+  │   │   ├── login/
+  │   │   │   └── page.jsx
+  │   │   ├── dashboard/
+  │   │   │   └── page.jsx
+  │   │   ├── analytics/
+  │   │   │   └── page.jsx
+  │   │   └── settings/
+  │   │       └── page.jsx
+  │   ├── components/
+  │   │   ├── Dashboard.jsx
+  │   │   ├── DataTable.jsx
+  │   │   ├── ChartWidget.jsx
+  │   │   └── UserMenu.jsx
+  │   ├── hooks/
+  │   │   ├── useAuth.js
+  │   │   └── useHealthData.js
+  │   ├── services/
+  │   │   └── api.js
+  │   ├── store/
+  │   │   └── store.js
+  │   ├── styles/
+  │   │   └── globals.css
+  │   ├── public/
+  │   ├── .env.example
+  │   ├── package.json
+  │   ├── next.config.js
+  │   ├── tailwind.config.js
+  │   ├── Dockerfile
+  │   └── README.md
+  ├── infra/
+  │   ├── docker-compose.yml          # local dev env
+  │   ├── docker-compose.prod.yml     # production env
+  │   ├── aws/
+  │   │   ├── terraform/              # IaC configuration
+  │   │   └── README.md
+  │   └── README.md
+  │
+  ├── docs/
+  │   ├── ARCHITECTURE.md             # architecture design document
+  │   ├── API.md                      # API document
+  │   ├── DEPLOYMENT.md               # infrastructure guideline
+  │   ├── DATABASE.md                 # database design
+  │   └── CONTRIBUTING.md             # contribution guideline
+  │
+  ├── .github/
+  │   └── workflows/
+  │       ├── backend-ci.yml          # backend CI/CD
+  │       └── frontend-ci.yml         # frontend CI/CD
+  │
+  ├── .gitignore
+  ├── README.md                       # Project Overview
+  └── LICENSE
+  ```
 
 
 
