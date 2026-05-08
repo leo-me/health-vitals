@@ -20,7 +20,7 @@ This service is a dedicated container in the health vitals architecture. It comm
 
 
 
-# use venv 
+# use venv
 python -m venv .venv
 
 # activate（Mac/Linux）
@@ -38,11 +38,12 @@ uvicorn main:app --reload --port 8001
 
 
 # implementation sequence
-adapters (base) → schemas →  service → config → api → main
+adapters (base) → config -> schemas → service → api → main
 
 1. adapters/               - implement concrete adapters(inheriting base adapter)
-2. schemas/output.py       - define output contracts for per consumer
-3. services/delivery.py    - coordinate all adapters through the base interface
-4. core/config.py          - consumer configuration
+2. core/config.py          - consumer configuration
+3. schemas/output.py       - define output contracts for per consumer
+4. services/delivery.py    - coordinate all adapters through the base interface
 5. api/v1/                 - wire endpoints, no logic here
 6. main.py                 - register and inject adapters at startup
+
