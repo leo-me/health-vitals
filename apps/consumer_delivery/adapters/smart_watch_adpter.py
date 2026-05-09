@@ -1,22 +1,34 @@
 from base import IConsumerAdapter
 
+from core.config import settings
+
+from schemas.output import SmartWatchOutput, SweatingLevel
+
 class SmartWatchAdapter(IConsumerAdapter):
   name = 'smart_watch_adapter'
 
   def get_format(self):
-    return super().get_format()
+    return settings.smart_watch.output_format
 
 
   def get_schema(self):
-    return super().get_schema()
+    return SmartWatchOutput
 
 
   def validate(self, data):
     return super().validate(data)
 
 
-  def transform(self, data):
-    return super().transform(data)
+  def transform(self, data) -> SmartWatchOutput:
+    # get data from database
+
+
+    # transform to output schema
+    return SmartWatchOutput(
+      heart_rate=data.hr,
+      sweat_level=self._eda_to_sweat_level(data.eda),
+      timestamp=data.timestamp
+    )
 
 
   def deliver(self, data):
@@ -28,3 +40,13 @@ class SmartWatchAdapter(IConsumerAdapter):
 
   def on_error(cls, subclass):
     return super().on_error(subclass)
+
+
+
+  def _eda_to_sweat_level(self, eda: float) -> SweatingLevel:
+    if eda < 1.0:
+        return SweatingLevel.LOW
+    elif eda < 5.0:
+        return SweatingLevel.MEDIUM
+    else:
+        return SweatingLevel.HIGH
