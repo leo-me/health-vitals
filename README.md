@@ -8,6 +8,11 @@ Health_vitals design for a healthcare project. It handles sensor data ingestion,
 The healthcare project has completed its initial research cycle, validating design requirements through prototype development and early-stage evaluation. This backend service supports the next phase of that work: reliable data ingestion from wearable sensors, structured storage, and delivery of stress-related health signals to clinical consumers.
 
 
+# Data source
+Sample data from [Campanella et al., 2024](https://data.mendeley.com/datasets/kb42z77m2g/2),
+licensed under CC BY 4.0.
+
+
 ## Tech Stack
 
 **Backend**
@@ -33,6 +38,7 @@ The healthcare project has completed its initial research cycle, validating desi
 | HTTP Client | Axios |
 
 ---
+
 
 ## System Architecture
 

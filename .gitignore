@@ -6,4 +6,6 @@ init_docs/
 
 .env*
 
-mlruns/ 
+mlruns/
+
+data/raw/
