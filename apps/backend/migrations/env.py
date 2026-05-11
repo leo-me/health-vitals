@@ -12,7 +12,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from app.db.base import Base
-from app.models import user, alert, device, sensor_recording
+from app.models import user, alert, device, sensor_recording, model_registry, model_version
 from app.core.config import settings
 
 

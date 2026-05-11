@@ -7,3 +7,5 @@ from app.models.health import HealthData
 from app.models.alert import Alert
 from app.models.device import Device
 from app.models.sensor_recording import SensorRecording
+from app.models.model_version import ModelVersion
+from app.models.model_registry import ModelRegistry

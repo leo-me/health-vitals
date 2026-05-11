@@ -40,22 +40,32 @@ alembic init alembic # create default alembic folder
 
 ```
 
-# create table with postgres
+# use alembic to create database
 
-1. postgres create a table: CREATE DATABASE health_db
+1. postgres create a database: CREATE DATABASE health_db
 2. update db info to alembic.ini
 3. run script to generation file: alembic revision --autogenerate -m "create core tables"
-4. create table script:  alembic upgrade head
+
+# use alembic to create  new table (local development)
+1. update models/base.py add new table
+2. update migrations/env.py, add new table
+3. run script
+   ```sh
+   ENV_FILE=.env.dev alembic revision --autogenerate -m "create info"
+
+   ENV_FILE=.env.dev alembic upgrade head
+
+   ```
 
 # update table
 1. generate version file:
-    ```
-    alembic revision --autogenerate -m "update users email and password"
+    ```sh
+    ENV_FILE=.env.dev alembic revision --autogenerate -m "update users email and password"
     ```
 2. update postgres table
 
    ```
-   alembic upgrade head
+   ENV_FILE=.env.dev alembic upgrade head
    ```
 
 
