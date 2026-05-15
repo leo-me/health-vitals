@@ -9,3 +9,6 @@ init_docs/
 mlruns/
 
 data/raw/
+
+
+todo.*
