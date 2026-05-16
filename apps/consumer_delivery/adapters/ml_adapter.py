@@ -1,4 +1,4 @@
-from base import IConsumerAdapter
+from adapters.base import IConsumerAdapter
 
 from core.config import settings
 

@@ -1,8 +1,8 @@
-from base import IConsumerAdapter
+from adapters.base import IConsumerAdapter
 
 from core.config import settings
 
-from schemas.output import Researcher_csv_files
+from schemas.output import Researcher_csv_columns
 
 class ResearcherAdapter(IConsumerAdapter):
   name = 'research_adapter'
@@ -11,4 +11,4 @@ class ResearcherAdapter(IConsumerAdapter):
     return settings.model_config
 
   def get_schema(self):
-    return  Researcher_csv_files
+    return Researcher_csv_columns
