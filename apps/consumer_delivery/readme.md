@@ -32,7 +32,7 @@ pip install fastapi uvicorn
 pip freeze > requirements.txt
 
 # run app
-uvicorn app.main:app --reload --port 8001
+uvicorn main:app --reload --port 8001
 
 
 
