@@ -1,4 +1,5 @@
 import math
+import os
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
@@ -13,6 +14,8 @@ from adapters.researcher_adapter import ResearcherAdapter
 from core.cache import cache_get, cache_set
 from core.config import settings
 from models.sensor_recording import SensorRecording, SensorType
+
+_CACHE_ENABLED = (os.getenv("CACHE_ENABLED", "true").lower() != "false")
 
 
 @dataclass
@@ -85,9 +88,10 @@ def _build_sensor_data(db: Session, user_id: UUID) -> Optional[SensorData]:
 def get_consumer_data(db: Session, consumer_type: str, user_id: UUID) -> Optional[dict]:
     cache_key = f"{consumer_type}:{user_id}"
 
-    cached = cache_get(cache_key)
-    if cached is not None:
-        return cached
+    if _CACHE_ENABLED:
+        cached = cache_get(cache_key)
+        if cached is not None:
+            return cached
 
     if consumer_type not in _ADAPTERS:
         return None
@@ -100,5 +104,6 @@ def get_consumer_data(db: Session, consumer_type: str, user_id: UUID) -> Optiona
     output = adapter.transform(sensor_data)
     result = output.model_dump()
 
-    cache_set(cache_key, result, ttl_seconds=max(ttl, 1))
+    if _CACHE_ENABLED:
+        cache_set(cache_key, result, ttl_seconds=max(ttl, 1))
     return result

@@ -14,3 +14,7 @@ data/raw/
 todo.*
 
 .claude/
+
+results/
+
+user_ids.json
