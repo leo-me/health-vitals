@@ -47,23 +47,23 @@ def get_sensor_recording_by_user(
 
 @router.get('/device/{device_id}', response_model=list[SensorRecordingResponse])
 def get_sensor_recording_by_device(
-  device_id: UUID,  
-  current_user: User=Depends(get_current_user),
-  db: Session=Depends(get_db)
+  device_id: UUID,
+  current_user: User = Depends(get_current_user),
+  sensor_type: SensorType | None = Query(default=None),
+  db: Session = Depends(get_db)
 ):
   device = crud_device.get_device(db, device_id)
-  
+
   if not device:
     raise HTTPException(status_code=404, detail='Device not found')
 
   if current_user.id != device.user_id and current_user.user_type != UserTypeEnum.ADMIN:
     raise HTTPException(status_code=403, detail="No permission")
 
-  recordings = crud.get_recordings_by_device(db, device_id)
+  recordings = crud.get_recordings_by_device(db, device_id, sensor_type)
 
   if not recordings:
     raise HTTPException(status_code=404, detail='Recording not found')
-
 
   return recordings
 
