@@ -47,6 +47,20 @@ class MLOutput(BaseModel):
     eda_scr: Optional[float] = None
 
 
+class ResearcherOutput(BaseModel):
+    timestamp: datetime
+    bvp: Optional[float] = None
+    eda: Optional[float] = None
+    heart_rate: int
+    ibi: Optional[float] = None
+    temperature: Optional[float] = None
+    eda_scl: Optional[float] = None
+    eda_scr: Optional[float] = None
+    acc_x: Optional[float] = None
+    acc_y: Optional[float] = None
+    acc_z: Optional[float] = None
+
+
 Researcher_csv_columns = [
     'timestamp', 'bvp', 'eda', 'heart_rate', 'ibi',
     'temperature', 'eda_scl', 'eda_scr', 'acc_x', 'acc_y', 'acc_z'

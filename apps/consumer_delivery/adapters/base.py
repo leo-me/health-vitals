@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+from schemas.output import SweatingLevel, StressLevel
+
+
 
 class IConsumerAdapter(ABC):
 
@@ -51,3 +54,28 @@ class IConsumerAdapter(ABC):
   def on_error(cls, subclass):
     """handle error"""
 
+
+def _eda_to_sweat_level(self, eda: float) -> SweatingLevel:
+        if eda < 1.0:
+            return SweatingLevel.LOW
+        elif eda < 5.0:
+            return SweatingLevel.MIDDLE
+        return SweatingLevel.HIGH
+
+def _compute_stress(self, hr: float, eda: float) -> StressLevel:
+        score = 0
+        if hr > 100:
+            score += 2
+        elif hr > 80:
+            score += 1
+        if eda > 5.0:
+            score += 2
+        elif eda > 1.0:
+            score += 1
+        if score >= 4:
+            return StressLevel.HIGH
+        elif score >= 3:
+            return StressLevel.MIDDLE_HIGH
+        elif score >= 1:
+            return StressLevel.MIDDLE
+        return StressLevel.LOW
