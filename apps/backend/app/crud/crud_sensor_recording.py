@@ -49,6 +49,13 @@ def get_recordings_by_user(
 
 
 
-def get_recordings_by_device(db: Session, device_id: UUID) ->list[SensorRecording]:    #← search by device and return list
-  return db.query(SensorRecording).filter(SensorRecording.device_id == device_id).all()
+def get_recordings_by_device(
+  db: Session,
+  device_id: UUID,
+  sensor_type: SensorType | None = None
+) -> list[SensorRecording]:
+  query = db.query(SensorRecording).filter(SensorRecording.device_id == device_id)
+  if sensor_type is not None:
+    query = query.filter(SensorRecording.sensor_type == sensor_type)
+  return query.all()
 

@@ -6,9 +6,13 @@ import enum
 from app.db.base import Base
 
 class SensorType(enum.Enum):
-  HEART_RATE = 'heart_rate'
-  EDA = 'EDA'
-  ACCELEROMETER = 'accelerometer'
+  HEART_RATE    = 'heart_rate'
+  EDA           = 'eda'
+  ACCELEROMETER = 'accelerometer'   # legacy
+  BVP           = 'bvp'
+  ACC           = 'acc'
+  IBI           = 'ibi'
+  TEMP          = 'temp'
 
 
 class SensorRecording(Base):
@@ -17,6 +21,6 @@ class SensorRecording(Base):
   device_id = Column(UUID(as_uuid=True), ForeignKey("devices.id"), nullable=False, index=True)
   user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
   timestamp = Column(DateTime, default=datetime.utcnow)
-  sensor_type = Column(Enum(SensorType), nullable=False)
+  sensor_type = Column(Enum(SensorType, values_callable=lambda x: [e.value for e in x]), nullable=False)
   data = Column(JSONB, nullable=False)
   created_at = Column(DateTime, default=datetime.utcnow)
