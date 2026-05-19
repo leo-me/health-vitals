@@ -34,7 +34,8 @@ df["scenario"]    = df["force_fail"].map({False: "Standard", True: "Forced-fail"
 SIZES      = [1_000, 50_000, 500_000]
 SIZE_LABELS = ["small\n(1 K)", "medium\n(50 K)", "large\n(500 K)"]
 FVS        = ["v1", "v2"]
-THRESHOLDS = [0.75, 0.80, 0.85]
+#THRESHOLDS = [0.75, 0.80, 0.85]
+THRESHOLDS = [0.50, 0.55, 0.60]
 COLORS     = {"v1": "#4C72B0", "v2": "#DD8452"}
 THR_COLORS = ["#2ca02c", "#ff7f0e", "#d62728"]
 
@@ -276,7 +277,8 @@ ax_dur.yaxis.set_major_formatter(ticker.FuncFormatter(
 
 # Row 1 right: gap to threshold (thr=0.75 only, most lenient)
 ax_gap = fig.add_subplot(gs[1, 2])
-thr = 0.75
+# thr = 0.75
+thr = 0.50
 sub_gap = df.groupby(["dataset_size", "feature_version"])["accuracy"].mean().reset_index()
 sub_gap["gap"] = sub_gap["accuracy"] - thr
 x = np.arange(len(SIZES))

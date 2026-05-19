@@ -10,7 +10,8 @@ import time
 from generate_data import generate_dataset, DATASET_SIZES
 from run_pipeline import run_pipeline
 
-THRESHOLDS       = [0.75, 0.80, 0.85]
+# THRESHOLDS       = [0.75, 0.80, 0.85]
+THRESHOLDS = [0.50, 0.55, 0.60]
 FEATURE_VERSIONS = ["v1", "v2"]
 
 

@@ -21,7 +21,7 @@ DATASET_SIZES = {"small": 1_000, "medium": 50_000, "large": 500_000}
 def generate_dataset(size: int, seed: int = 42) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
 
-    labels = rng.choice([0, 1], size=size, p=[0.4, 0.6])
+    labels = rng.choice([0, 1], size=size, p=[0.4, 0.6]) # Stress label ratio derived from Campanella et al. (2023): ~60% stress tasks, ~40% rest periods
 
     eda = rng.normal(2.5,  1.2,  size).clip(0)
     bvp = rng.normal(65,   8,    size)

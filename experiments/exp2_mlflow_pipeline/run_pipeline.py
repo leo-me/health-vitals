@@ -19,7 +19,7 @@ from sklearn.model_selection import train_test_split
 MLFLOW_URI     = "http://localhost:5004"
 EXPERIMENT     = "sensors2care_registry"
 MODEL_NAME     = "SensorsCarePipeline"
-N_ESTIMATORS   = 100
+N_ESTIMATORS   = 100 # Number of decision trees in the Random Forest classifier
 
 
 # ---------------------------------------------------------------------------

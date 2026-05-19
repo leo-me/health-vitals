@@ -15,6 +15,6 @@ todo.*
 
 .claude/
 
-results/
+*results/
 
 user_ids.json
