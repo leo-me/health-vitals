@@ -7,6 +7,9 @@ class Settings(BaseSettings):
   SECURITY_KEY: str
   ACCESS_TOKEN_EXPIRE_MINUTES: int
   ALGORITHM: str
+  MLFLOW_TRACKING_URI: str = "http://localhost:5004"
+  MLFLOW_EXPERIMENT: str = "sensors2care_registry"
+  MLFLOW_MODEL_NAME: str = "SensorsCarePipeline"
 
   @property
   def database_url(self) -> str:

@@ -5,6 +5,8 @@ from app.api.v1.endpoints.device import router as device_router
 from app.api.v1.endpoints.sensor_recording import router as sensor_recording_router
 from app.api.v1.endpoints.alerts import router as alert_router
 from app.api.v1.endpoints.auth import router as auth_router
+from app.api.v1.endpoints.models import router as models_router
+from app.api.v1.endpoints.training import router as training_router
 
 app = FastAPI(title = 'health vitals', version = '0.0.1')
 
@@ -13,6 +15,8 @@ app.include_router(device_router, prefix="/api/v1")
 app.include_router(sensor_recording_router, prefix="/api/v1")
 app.include_router(alert_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(models_router, prefix="/api/v1")
+app.include_router(training_router, prefix="/api/v1")
 
 @app.get('/health')
 def check():
