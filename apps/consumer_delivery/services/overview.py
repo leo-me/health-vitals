@@ -39,26 +39,46 @@ OVERVIEW_CACHE_TTL = int(os.getenv("OVERVIEW_CACHE_TTL", "60"))
 
 # Single CTE-based query — kept verbatim for traceability. Excludes 'ibi'
 # because its loaded timestamps are corrupted in the current dataset.
+#
+# ACC rows store {"x", "y", "z"} (not {"value"}); every other signal stores
+# {"value"}. We compute the per-row magnitude inline so the aggregate row for
+# sensor_type='acc' is meaningful instead of NULL.
 _OVERVIEW_SQL = text("""
     WITH anchor AS (
         SELECT MAX(timestamp) AS t
         FROM sensor_recordings
         WHERE user_id = :uid
           AND sensor_type <> 'ibi'
+    ),
+    typed AS (
+        SELECT
+            sr.timestamp,
+            sr.sensor_type,
+            CASE
+                WHEN sr.sensor_type = 'acc' THEN
+                    sqrt(
+                        ((sr.data->>'x')::float) ^ 2 +
+                        ((sr.data->>'y')::float) ^ 2 +
+                        ((sr.data->>'z')::float) ^ 2
+                    )
+                ELSE
+                    NULLIF((sr.data->>'value')::float, NULL)
+            END AS v
+        FROM sensor_recordings sr, anchor
+        WHERE sr.user_id     = :uid
+          AND sr.sensor_type <> 'ibi'
+          AND anchor.t IS NOT NULL
+          AND sr.timestamp   > anchor.t - (:days || ' days')::interval
+          AND sr.timestamp  <= anchor.t
     )
     SELECT
-        date_trunc('hour', sr.timestamp)                     AS bucket,
-        sr.sensor_type                                       AS sensor_type,
-        COUNT(*)                                             AS n,
-        AVG( NULLIF((sr.data->>'value')::float, NULL) )      AS avg_value,
-        MAX( NULLIF((sr.data->>'value')::float, NULL) )      AS max_value,
-        MIN( NULLIF((sr.data->>'value')::float, NULL) )      AS min_value
-    FROM sensor_recordings sr, anchor
-    WHERE sr.user_id     = :uid
-      AND sr.sensor_type <> 'ibi'
-      AND anchor.t IS NOT NULL
-      AND sr.timestamp   > anchor.t - (:days || ' days')::interval
-      AND sr.timestamp  <= anchor.t
+        date_trunc('hour', timestamp)  AS bucket,
+        sensor_type                     AS sensor_type,
+        COUNT(*)                        AS n,
+        AVG(v)                          AS avg_value,
+        MAX(v)                          AS max_value,
+        MIN(v)                          AS min_value
+    FROM typed
     GROUP BY 1, 2
     ORDER BY 1, 2;
 """)

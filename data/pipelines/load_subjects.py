@@ -110,6 +110,33 @@ def _ensure_device(db, subject_idx: int, users: list[User]) -> Device:
 
 # ── per-signal loader ─────────────────────────────────────────────────────────
 
+def _detect_metadata_rows(csv_path: Path, sensor_type: SensorType, expected_hz) -> int:
+    """
+    Empatica E4 raw CSVs prefix the readings with 2 metadata lines
+    (initial Unix timestamp, then sampling rate). Subjects 18–29 in this
+    dataset use that raw format; subjects 01–17 are pre-cleaned. We auto-
+    detect by reading the first two non-empty lines: if line 1 parses as
+    a float > 1e8 (any plausible Unix timestamp from the last 50 years
+    is well above this; no real sensor reading is) and the file is not
+    IBI/ACC (which use multi-column or event formats handled separately),
+    treat it as the metadata format and skip 2 rows.
+    """
+    if sensor_type == SensorType.IBI:
+        return 0
+    try:
+        with open(csv_path) as f:
+            first = f.readline().strip()
+            if not first:
+                return 0
+            # ACC's first line is "32,32,32" → not a single float → skip 1 row
+            if "," in first:
+                return 1
+            v = float(first.split(",")[0])
+            return 2 if v > 1e8 else 0
+    except (ValueError, OSError):
+        return 0
+
+
 def _load_signal(
     db,
     csv_path: Path,
@@ -119,6 +146,12 @@ def _load_signal(
     n_cols: int,
     skip_rows: int,
 ) -> int:
+    # Auto-detect Empatica E4 metadata rows (timestamp + sampling rate) for
+    # the subjects that ship in raw format. The static skip_rows from the
+    # SIGNALS dict is now a *minimum* — we expand it when metadata is detected.
+    detected = _detect_metadata_rows(csv_path, sensor_type, hz)
+    skip_rows = max(skip_rows, detected)
+
     # idempotency: skip if any row already exists for this device+type
     exists = (
         db.query(SensorRecording.id)
@@ -184,7 +217,8 @@ def _load_signal(
         db.bulk_save_objects(batch)
         inserted += len(batch)
 
-    print(f"    {csv_path.name}: {inserted:,} rows inserted")
+    note = f"  [auto-skipped {skip_rows} metadata rows]" if detected > 0 else ""
+    print(f"    {csv_path.name}: {inserted:,} rows inserted{note}")
     return inserted
 
 
