@@ -1,7 +1,32 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(cd *)",
+      "Bash(xargs basename -a)",
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(npx --yes shadcn@canary init --yes --base-color slate)",
+      "Bash(npx --yes shadcn@canary init --help)",
+      "Bash(npx --yes shadcn@canary init --defaults --yes)",
+      "Bash(npx --yes shadcn@canary add dialog dropdown-menu form input label select skeleton sonner table tooltip badge card popover calendar --yes)",
+      "Bash(npm list *)",
+      "Bash(npm run *)",
+      "Bash(echo \"PID: $!\")",
+      "Read(//private/tmp/**)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:3000/home)",
+      "Bash(curl -s http://localhost:3000/home)",
+      "Bash(curl -s -o /dev/null -w \"/dashboard HTTP %{http_code}\\\\n\" http://localhost:3000/dashboard)",
+      "Bash(curl -s http://localhost:3000/dashboard)",
+      "Bash(curl -s -o /dev/null -w \"backend:8000 %{http_code}\\\\n\" http://localhost:8000/health)",
+      "Bash(curl -s -o /dev/null -w \"cdl:8001 %{http_code}\\\\n\" http://localhost:8001/ping)",
+      "Bash(lsof -ti:3000)",
+      "Bash(xargs -r kill)",
+      "Bash(curl -s http://localhost:3000/devices)",
+      "Read(//tmp/**)",
+      "Bash(curl -s 'http://localhost:3000/_next/static/chunks/%5Broot-of-the-server%5D__0nb0b_8._.css')",
+      "Bash(grep -oE '\\\\.bg-sidebar[^,{}]*[,{][^}]{0,200}')"
     ]
   }
 }
