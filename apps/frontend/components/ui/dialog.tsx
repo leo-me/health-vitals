@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
-  console.log('props: ', props);
 
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }
@@ -54,7 +53,6 @@ function DialogContent({
   showCloseButton?: boolean
 }) {
 
-  console.log(222, props, children);
   
   return (
     <DialogPortal>
