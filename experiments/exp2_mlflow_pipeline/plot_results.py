@@ -21,23 +21,39 @@ import pandas as pd
 
 # ── paths ─────────────────────────────────────────────────────────────────────
 HERE    = Path(__file__).resolve().parent
-CSV     = HERE / "results" / "pipeline_results.csv"
-RESULTS = HERE / "results"
+# Prefer the de-duplicated CSV emitted alongside the raw export — pipeline_results.csv
+# can carry stale rows from earlier sanity-check runs (different forced_fail values,
+# different sizes), which would distort the averages below. Fall back to the raw
+# export when the clean variant hasn't been produced yet.
+CSV_CLEAN = HERE / "results" / "pipeline_results_clean.csv"
+CSV_RAW   = HERE / "results" / "pipeline_results.csv"
+CSV       = CSV_CLEAN if CSV_CLEAN.exists() else CSV_RAW
+RESULTS   = HERE / "results"
 
 df = pd.read_csv(CSV)
+print(f"loaded {len(df)} rows from {CSV.name}")
 
 # ── derived columns ───────────────────────────────────────────────────────────
-df["size_label"]  = df["dataset_size"].map({1_000: "small\n(1 K)", 50_000: "medium\n(50 K)", 500_000: "large\n(500 K)"})
+SIZE_LABEL_MAP = {1_000: "small\n(1 K)", 50_000: "medium\n(50 K)", 500_000: "large\n(500 K)"}
+df["size_label"]  = df["dataset_size"].map(SIZE_LABEL_MAP)
 df["size_order"]  = df["dataset_size"].map({1_000: 0, 50_000: 1, 500_000: 2})
 df["scenario"]    = df["force_fail"].map({False: "Standard", True: "Forced-fail"})
 
-SIZES      = [1_000, 50_000, 500_000]
-SIZE_LABELS = ["small\n(1 K)", "medium\n(50 K)", "large\n(500 K)"]
-FVS        = ["v1", "v2"]
+# Auto-detect which sizes are present (small + medium when the large sweep was
+# skipped; all three otherwise) so the script doesn't draw empty bars for sizes
+# that weren't run.
+SIZES       = sorted(df["dataset_size"].unique().tolist())
+SIZE_LABELS = [SIZE_LABEL_MAP[s] for s in SIZES]
+FVS         = ["v1", "v2"]
 #THRESHOLDS = [0.75, 0.80, 0.85]
-THRESHOLDS = [0.50, 0.55, 0.60]
-COLORS     = {"v1": "#4C72B0", "v2": "#DD8452"}
-THR_COLORS = ["#2ca02c", "#ff7f0e", "#d62728"]
+THRESHOLDS  = [0.50, 0.55, 0.60]
+COLORS      = {"v1": "#4C72B0", "v2": "#DD8452"}
+THR_COLORS  = ["#2ca02c", "#ff7f0e", "#d62728"]
+
+# Counts used in chart subtitles (kills the stale "no run crossed any threshold"
+# claim from when this script was first written).
+N_REGISTERED = int(df["registered"].sum())
+N_TOTAL      = int(len(df))
 
 # ── style ─────────────────────────────────────────────────────────────────────
 plt.rcParams.update({
@@ -57,7 +73,7 @@ plt.rcParams.update({
 fig, axes = plt.subplots(1, 2, figsize=(13, 5), sharey=True)
 fig.suptitle(
     "Exp 2 — Model Accuracy by Dataset Size and Feature Version\n"
-    "(dashed lines = thresholds; no run crossed any threshold)",
+    f"(dashed lines = thresholds; {N_REGISTERED}/{N_TOTAL} runs crossed at least one)",
     fontsize=12, fontweight="bold"
 )
 
@@ -137,7 +153,7 @@ plt.close(fig)
 fig, axes = plt.subplots(1, 3, figsize=(14, 5), sharey=True)
 fig.suptitle(
     "Exp 2 — Accuracy Gap to Registration Threshold\n"
-    "(negative = failed; all bars are below zero → 0 registrations)",
+    "(positive bars register; negative bars trigger the retrain branch)",
     fontsize=12, fontweight="bold"
 )
 
@@ -165,7 +181,8 @@ for ax, thr in zip(axes, THRESHOLDS):
     ax.set_xlabel("Dataset Size")
     ax.set_ylabel("Accuracy − Threshold" if ax == axes[0] else "")
     ax.set_title(f"Threshold = {thr}", fontweight="bold")
-    ax.set_ylim(-0.35, 0.05)
+    # Auto-fit y range — the old hard clamp [-0.35, 0.05] clipped positive bars
+    # once registrations started landing.
     ax.legend(fontsize=9, framealpha=0.7)
 
 plt.tight_layout()
@@ -219,7 +236,7 @@ plt.close(fig)
 fig = plt.figure(figsize=(18, 11))
 fig.suptitle(
     "Exp 2 — MLflow Model Registry Pipeline: Training, Evaluation, and Registration\n"
-    "RandomForest (n=100)  |  3 dataset sizes  |  3 thresholds  |  2 feature versions  |  2 scenarios",
+    f"RandomForest (n=100)  |  {len(SIZES)} dataset sizes  |  {len(THRESHOLDS)} thresholds  |  {len(FVS)} feature versions  |  2 scenarios",
     fontsize=12, fontweight="bold", y=1.01
 )
 
@@ -297,7 +314,7 @@ ax_gap.set_xticks(x)
 ax_gap.set_xticklabels(SIZE_LABELS, fontsize=9)
 ax_gap.set_ylabel("Accuracy − Threshold")
 ax_gap.set_title(f"Gap to Threshold ({thr})", fontweight="bold")
-ax_gap.set_ylim(-0.28, 0.05)
+# (no hard y-limit — registrations push some bars above 0 now)
 ax_gap.legend(fontsize=9, framealpha=0.7)
 
 # Row 1 far right: retrain rate

@@ -217,3 +217,87 @@ What changed by lowering the thresholds is the *coverage of pipeline states exer
 ### 结论意义
 
 本实验的核心价值在于 **Pipeline 基础设施的可验证性**：通过将阈值下调至跨越多数类基线两侧，36 次调用完整覆盖了"通过 / 边界 / 失败"三种状态——注册分支、重训分支、MLflow 追踪与模型版本标签均按设计执行。**注意：注册通过并不代表模型有效**，accuracy ≈ 0.55–0.59 反映的是数据本身（合成标签与特征独立），而非分类器性能。要让"通过阈值"具有模型质量含义，需将合成标签替换为从 Empatica E4 真实数据（`data/pipelines/load_subjects.py` 加载）提取的生理应力标签，让特征与标签建立真实统计关系。
+
+---
+
+## 7. Re-run via backend HTTP API (2026-05-25)
+
+The pipeline above ran directly inside `run_pipeline.py` (in-process sklearn + MLflow client). On **2026-05-25** the experiment was rewired so that **every step is reached by hitting the backend's `POST /api/v1/train/` endpoint** — synthetic data generation, feature engineering, training, MLflow logging, and the PG dual-write into `model_version` + `model_registry` all happen inside the production code path.
+
+### 7.1 Architecture used
+
+```
+run_all.py → api_client.py ──HTTP──▶ backend /api/v1/train (admin-only, BackgroundTask)
+                                          ├─▶ feature_service.build_dataset(simulation)
+                                          ├─▶ training_service.run_training (+force_fail noise)
+                                          ├─▶ MLflow runs / Model Registry (localhost:5004)
+                                          └─▶ PostgreSQL: model_version + model_registry
+```
+
+Notable shifts vs. §5 above:
+
+| Aspect | Original (in-process) | HTTP-driven (this section) |
+|---|---|---|
+| Caller | `run_pipeline.run_pipeline(df, …)` | `httpx.post("/api/v1/train")` + poll `GET /train/{job_id}` |
+| Auth | none | JWT for a seeded admin (alembic `150a555cf5a9`) |
+| Synthetic data | local `generate_data.py` | backend `feature_service._generate_synthetic` |
+| Noise injection (force_fail) | inside `run_pipeline.py` | inside `training_service.run_training` (between `build_dataset` and `train_test_split`) |
+| `status=production` MLflow tag | yes | replaced by `model_registry.stage = 'PRODUCTION'` in PG (and previous rows auto-flipped to `ARCHIVED`) |
+
+### 7.2 Matrix executed
+
+Reduced sweep used: **2 sizes × 3 thresholds × 2 fv × 2 scenarios = 24 pipeline calls**. The `large` (500 000-row) cell was skipped because each force-fail large run takes ~8 min, bringing the full sweep above 1 h 50 min — an HTTP refactor is not the right test bed to confirm scaling cost.
+
+### 7.3 Results — cleaned matrix (last run per cell)
+
+The MLflow store carried a few stale runs from earlier sanity checks; the figures below come from `results/pipeline_results_clean.csv`, which keeps only the most recent run per `(force_fail, dataset_size, threshold, feature_version, retrain_count)` cell.
+
+| Scenario × size | runs | registered | retrained | mean acc | mean dur (s) |
+|---|---:|---:|---:|---:|---:|
+| standard × 1 000 | 8 | 4 | 2 | 0.5581 | 0.22 |
+| standard × 50 000 | 8 | 4 | 2 | 0.5721 | 21.01 |
+| forced_fail × 1 000 | 9 | 4 | 3 | 0.5528 | 0.18 |
+| forced_fail × 50 000 | 8 | 4 | 2 | 0.5760 | 18.68 |
+
+| Threshold | pipelines | registered share | retrain share |
+|---|---:|---:|---:|
+| 0.50 | 8 | 100 % | 0 % |
+| 0.55 | 9 | 89 % | 11 % |
+| 0.60 | 16 | 0 % | 50 % |
+
+The retrain branch is exercised end-to-end: at threshold = 0.55 in the forced-fail / small / v2 cell the first attempt scored 0.525 < 0.55 (fail), the retrain with `random_state + 100` scored 0.575 ≥ 0.55 (pass), and the second attempt's run is the one that actually wrote `model_version` + `model_registry` rows. This is the "fail then rescue" branch of the pipeline that the original in-process run also covered, now reproduced through the HTTP API.
+
+### 7.4 Dual-write verification
+
+After truncating `model_version` + `model_registry` and re-running, PG contains exactly the rows we expected:
+
+```text
+        tbl       | count
+ ----------------+-------
+  model_registry |    16
+  model_version  |    16
+```
+
+16 == number of `registered=True` cells in §7.3. The most recent insert is tagged `stage = PRODUCTION`; everything else was rotated to `ARCHIVED` by `crud_model_registry.create_model_registry`.
+
+### 7.5 Issues found and fixed during the re-run
+
+1. **MLflow 3.x DNS-rebinding host-header validation.** Out of the box the MLflow server refuses the docker-network hostname `mlflow:5000` with HTTP 403. Fixed by adding `MLFLOW_SERVER_ALLOWED_HOSTS="mlflow:*,mlflow,localhost:*,localhost,127.0.0.1:*,127.0.0.1"` to the `mlflow` service in `infra/docker-compose.yml`.
+2. **`force_fail` semantics drift.** The backend's training_service did not previously support the force_fail scenario and did not log a `force_fail` param. Added the field to `TrainingRequest`, injected the noise in `run_training()` between `build_dataset` and `train_test_split` (covers both train and test — matches the original §2.6 semantics), and added the param to `mlflow.log_params` so `collect_results.py` still reads the correct value.
+3. **Admin auth.** The `/train` endpoint is admin-only. Added alembic migration `150a555cf5a9_seed_exp2_admin_user.py` that idempotently seeds `exp2-admin@hv.local` with a known password (configurable via `EXP2_ADMIN_EMAIL` / `EXP2_ADMIN_PASSWORD` env vars). `api_client.py` uses the same defaults so dev "just works".
+
+### 7.6 Charts
+
+All five charts under `results/` were regenerated from `pipeline_results_clean.csv` on 2026-05-25. `plot_results.py` now auto-prefers the clean CSV when present and auto-detects which dataset sizes were actually run (so the small + medium sweep doesn't draw empty bars where `large` used to sit). The earlier subtitles that asserted "no run crossed any threshold" / "all bars below zero → 0 registrations" were dropped — they had become factually wrong now that the lowered thresholds (0.50/0.55/0.60) bracket the empirical baseline.
+
+| File | Shows |
+|---|---|
+| `results/combined.png` | 5-panel thesis figure: accuracy by scenario, duration scaling, gap to thr=0.5, auto-retrain rate |
+| `results/accuracy_overview.png` | Accuracy bars by size × fv, both scenarios, with thr=0.50/0.55/0.60 dashed lines |
+| `results/gap_to_threshold.png` | Three panels (one per threshold) showing accuracy − threshold; positive bars register, negative bars trigger retrain |
+| `results/duration_scaling.png` | Mean training duration on log scale: 0.2s small vs ~20s medium |
+| `results/retrain_behavior.png` | Percent of pipeline calls per (size, fv) that triggered the retrain branch |
+
+![Combined thesis figure](results/combined.png)
+
+![Accuracy gap to threshold](results/gap_to_threshold.png)

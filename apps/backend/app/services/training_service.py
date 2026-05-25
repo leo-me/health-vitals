@@ -21,6 +21,7 @@ from uuid import UUID
 
 import mlflow
 import mlflow.sklearn
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
@@ -46,6 +47,7 @@ def _train_and_log(
   dataset_size: int,
   feature_version: str,
   random_state: int,
+  force_fail: bool,
   retrain_count: int,
 ) -> dict:
   t0       = time.time()
@@ -68,6 +70,9 @@ def _train_and_log(
       "dataset_size":    dataset_size,
       "feature_version": feature_version,
       "random_state":    random_state,
+      # exp2's collect_results.py reads params.force_fail and treats "True" as
+      # the noise-injected scenario — keep the param so CSV exports stay correct.
+      "force_fail":      force_fail,
     })
     mlflow.log_metrics({
       "accuracy":         accuracy,
@@ -111,6 +116,7 @@ def run_training(
   dataset_size: int = 1_000,
   feature_version: str = "v1",
   random_state: int = 42,
+  force_fail: bool = False,
   model_name: Optional[str] = None,
   description: Optional[str] = None,
 ) -> dict:
@@ -131,6 +137,13 @@ def run_training(
     db=db,
   )
 
+  # Inject noise on the full X so train AND test are both polluted — matches
+  # the old exp2 semantics (clean test set would let the model overfit past
+  # the threshold and never trigger the retrain branch).
+  if force_fail:
+    rng = np.random.default_rng(random_state)
+    X = X + rng.normal(0, 5, X.shape)
+
   X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=random_state
   )
@@ -141,6 +154,7 @@ def run_training(
     dataset_size=descriptor["n_rows"],
     feature_version=feature_version,
     random_state=random_state,
+    force_fail=force_fail,
     retrain_count=0,
   )
 
@@ -152,6 +166,7 @@ def run_training(
       dataset_size=descriptor["n_rows"],
       feature_version=feature_version,
       random_state=random_state + 100,
+      force_fail=force_fail,
       retrain_count=1,
     )
 

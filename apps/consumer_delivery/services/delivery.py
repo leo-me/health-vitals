@@ -40,10 +40,10 @@ class SensorData:
 
 
 _ADAPTERS = {
-    "smart_watch":   (SmartWatchAdapter(),   int(settings.smart_watch.data_frequency // 1000)),
-    "web_dashboard": (WebDashboardAdapter(), int(settings.web_dashboard.data_frequency // 1000)),
-    "ml":            (MLAdapters(),          int(settings.ml.data_frequency // 1000)),
-    "researcher":    (ResearcherAdapter(),   int(settings.researcher.data_frequency // 1000)),
+    "smart_watch":   (SmartWatchAdapter(),   settings.smart_watch.data_frequency // 1000),
+    "web_dashboard": (WebDashboardAdapter(), settings.web_dashboard.data_frequency // 1000),
+    "ml":            (MLAdapters(),          settings.ml.data_frequency // 1000),
+    "researcher":    (ResearcherAdapter(),   settings.researcher.data_frequency // 1000),
 }
 
 

@@ -26,6 +26,12 @@ services:
       - "5004:5000"
     volumes:
       - ./mlruns:/mlruns
+    environment:
+      # MLflow 3.x adds DNS-rebinding host-header validation; without this it
+      # rejects the docker-network hostname "mlflow:5000" with HTTP 403.
+      # Matching is exact-string unless the entry contains "*", so use a glob
+      # to cover any port the client uses.
+      MLFLOW_SERVER_ALLOWED_HOSTS: "mlflow:*,mlflow,localhost:*,localhost,127.0.0.1:*,127.0.0.1"
     command: mlflow server --host 0.0.0.0 --port 5000
 
   backend:
@@ -75,6 +81,22 @@ services:
         condition: service_started
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ../apps/frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # Read by next.config.ts at server startup to build the /backend and /cdl
+      # rewrite destinations. The browser only ever sees same-origin paths.
+      BACKEND_BASE_URL: http://backend:8000
+      CDL_BASE_URL: http://consumer_delivery:8001
+    depends_on:
+      backend:
+        condition: service_started
+      consumer_delivery:
+        condition: service_started
 
 volumes:
   pg_data:

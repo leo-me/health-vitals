@@ -16,6 +16,9 @@ class TrainingRequest(BaseModel):
   dataset_size: int = Field(1_000, ge=10, le=1_000_000)
   feature_version: Literal["v1", "v2"] = "v1"
   random_state: int = 42
+  # Inject Gaussian noise on X before train/test split so the gate fails on
+  # purpose — exp2 uses this to exercise the retrain-once branch.
+  force_fail: bool = False
   model_name: Optional[str] = None
   description: Optional[str] = None
 

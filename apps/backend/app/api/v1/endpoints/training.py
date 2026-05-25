@@ -42,6 +42,7 @@ def _execute(job_id: UUID, request: TrainingRequest) -> None:
       dataset_size    = request.dataset_size,
       feature_version = request.feature_version,
       random_state    = request.random_state,
+      force_fail      = request.force_fail,
       model_name      = request.model_name,
       description     = request.description,
     )

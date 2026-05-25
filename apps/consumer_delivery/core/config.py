@@ -25,25 +25,25 @@ class Settings(BaseSettings):
 settings = Settings(
   smart_watch=ConsumerConfig(
     output_format='json',
-    data_frequency=5*1000,
+    data_frequency=5*1000, # every 5 seconds
     endpoint_url= '',
     auth=AuthType.JWT
   ),
   web_dashboard=ConsumerConfig(
     output_format='json',
-    data_frequency=1000,
+    data_frequency=1000, # every seconds
     endpoint_url='',
     auth=AuthType.JWT
   ),
   researcher=ConsumerConfig(
     output_format='csv',
-    data_frequency=10*60*1000,
+    data_frequency=10*60*1000, # every 10 mins
     endpoint_url='',
     auth=AuthType.JWT
   ),
   ml=ConsumerConfig(
     output_format='json',
-    data_frequency=60*1000,
+    data_frequency=60*1000, # every mins
     endpoint_url='',
     auth=AuthType.API_KEY
   )

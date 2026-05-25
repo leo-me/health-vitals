@@ -31,7 +31,7 @@ from pathlib import Path
 
 from locust import HttpUser, between, events, task
 
-BASE_URL     = os.environ.get("BASE_URL", "http://localhost:8001")
+BASE_URL     = os.environ.get("BASE_URL", "http://localhost:8001") # consumer delivery service
 HERE         = Path(__file__).resolve().parent
 PROJECT_ROOT = HERE.parent.parent
 MANIFEST_PATH = PROJECT_ROOT / "data" / "pipelines" / "user_ids.json"
@@ -53,7 +53,7 @@ def on_locust_init(environment, **kwargs):
 
 class ConsumerUser(HttpUser):
     host      = BASE_URL
-    wait_time = between(0.05, 0.2)
+    wait_time = between(0.05, 0.2) # each request wait time with random  between 0.05 to 0.2
 
     @task
     def get_smart_watch_data(self):

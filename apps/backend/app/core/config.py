@@ -11,6 +11,12 @@ class Settings(BaseSettings):
   MLFLOW_EXPERIMENT: str = "sensors2care_registry"
   MLFLOW_MODEL_NAME: str = "SensorsCarePipeline"
 
+  # Seeded by migration `seed_exp2_admin_user`. exp2's HTTP client also reads
+  # these (via the env file or its own defaults) to log in against /train.
+  # Heads-up: users.email is varchar(30) — pick a value that fits.
+  EXP2_ADMIN_EMAIL: str    = "exp2-admin@hv.local"
+  EXP2_ADMIN_PASSWORD: str = "exp2-admin-changeme"
+
   @property
   def database_url(self) -> str:
     return self.DATABASE_URL.replace("postgres://", "postgresql://", 1)
