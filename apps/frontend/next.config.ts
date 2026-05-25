@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
-const backend = process.env.NEXT_PUBLIC_BACKEND_BASE_URL ?? "http://localhost:8000";
-const cdl = process.env.NEXT_PUBLIC_CDL_BASE_URL ?? "http://localhost:8001";
+// const backend = process.env.BACKEND_BASE_URL ?? "http://localhost:8000";
+// const cdl = process.env.CDL_BASE_URL ?? "http://localhost:8001";
+// next.config.ts
+const backend = process.env.BACKEND_BASE_URL ?? "http://backend:8000";
+const cdl = process.env.CDL_BASE_URL ?? "http://consumer_delivery:8001";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,

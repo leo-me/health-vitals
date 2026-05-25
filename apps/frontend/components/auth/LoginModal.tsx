@@ -37,6 +37,7 @@ export function LoginModal() {
       toast.error(extractDetail(err));
     } finally {
       setSubmitting(false);
+
     }
   }
 

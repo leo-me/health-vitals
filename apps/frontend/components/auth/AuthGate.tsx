@@ -26,8 +26,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     hydrate();
   }, [hydrate]);
 
-      console.log('hydrated: ', hydrated);
-      console.log('hydrated:', hydrated, '| token:', token);
+  console.log('hydrated: ', hydrated);
+  console.log('hydrated:', hydrated, '| token:', token);
 
 
 

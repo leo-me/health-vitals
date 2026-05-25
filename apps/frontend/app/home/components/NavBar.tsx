@@ -1,4 +1,5 @@
 import { ActivityIcon, ArrowRight } from "lucide-react";
+import { SignIn } from "./SignIn";
 
 export function Navbar() {
   return (
@@ -31,20 +32,7 @@ export function Navbar() {
         </div>
 
         {/* CTA buttons */}
-        <div className="flex items-center gap-3">
-          <a
-            href="#"
-            className="text-sm text-slate-700 hover:text-slate-900 font-medium flex items-center gap-1 transition-colors"
-          >
-            Sign in <ArrowRight className="w-3.5 h-3.5" />
-          </a>
-          <a
-            href="#"
-            className="text-sm bg-slate-900 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-800 transition-colors flex items-center gap-1"
-          >
-            Get started <ArrowRight className="w-3.5 h-3.5" />
-          </a>
-        </div>
+         <SignIn />
       </div>
     </nav>
   );
