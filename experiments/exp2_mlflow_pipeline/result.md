@@ -267,9 +267,9 @@ The MLflow store carried a few stale runs from earlier sanity checks; the figure
 
 The retrain branch is exercised end-to-end: at threshold = 0.55 in the forced-fail / small / v2 cell the first attempt scored 0.525 < 0.55 (fail), the retrain with `random_state + 100` scored 0.575 ≥ 0.55 (pass), and the second attempt's run is the one that actually wrote `model_version` + `model_registry` rows. This is the "fail then rescue" branch of the pipeline that the original in-process run also covered, now reproduced through the HTTP API.
 
-### 7.4 Dual-write verification
+### 7.4 Dual-write verification & mutex-production invariant
 
-After truncating `model_version` + `model_registry` and re-running, PG contains exactly the rows we expected:
+After truncating `model_version` + `model_registry` and re-running, PG contained one row per registered pipeline call:
 
 ```text
         tbl       | count
@@ -278,13 +278,27 @@ After truncating `model_version` + `model_registry` and re-running, PG contains 
   model_version  |    16
 ```
 
-16 == number of `registered=True` cells in §7.3. The most recent insert is tagged `stage = PRODUCTION`; everything else was rotated to `ARCHIVED` by `crud_model_registry.create_model_registry`.
+16 == number of `registered=True` cells in §7.3.
+
+**Stage invariant**: at any instant `COUNT(*) WHERE stage='PRODUCTION' AND model_name='SensorsCarePipeline'` must be ≤ 1, with all prior production rows rotated to `ARCHIVED`. The current state after a forward-validation `/train` call (designed to force one more rotation):
+
+```text
+       tbl       |   stage    | count
+-----------------+------------+-------
+ model_registry  | PRODUCTION |     1
+ model_registry  | ARCHIVED   |    16
+ model_version   | PRODUCTION |     1
+ model_version   | ARCHIVED   |    16
+```
+
+> **Cascade detail.** An earlier version of `crud_model_registry._archive_prior_productions` only demoted registry rows, leaving the linked `model_version.stage` columns stuck at `PRODUCTION` (so a snapshot of the DB would show 16 model_versions all marked `PRODUCTION` while only 1 model_registry row was). The CRUD layer was updated to cascade the demotion onto `ModelVersion.id IN (...)` in the same transaction — see `apps/backend/app/crud/crud_model_registry.py:_archive_prior_productions`. Historical rows from before the fix were back-filled with one UPDATE keyed on `model_registry.stage = 'ARCHIVED'`. After the fix, an extra `/train` call was issued and both tables remained at 1 / N, confirming forward rotation behaves correctly.
 
 ### 7.5 Issues found and fixed during the re-run
 
 1. **MLflow 3.x DNS-rebinding host-header validation.** Out of the box the MLflow server refuses the docker-network hostname `mlflow:5000` with HTTP 403. Fixed by adding `MLFLOW_SERVER_ALLOWED_HOSTS="mlflow:*,mlflow,localhost:*,localhost,127.0.0.1:*,127.0.0.1"` to the `mlflow` service in `infra/docker-compose.yml`.
 2. **`force_fail` semantics drift.** The backend's training_service did not previously support the force_fail scenario and did not log a `force_fail` param. Added the field to `TrainingRequest`, injected the noise in `run_training()` between `build_dataset` and `train_test_split` (covers both train and test — matches the original §2.6 semantics), and added the param to `mlflow.log_params` so `collect_results.py` still reads the correct value.
 3. **Admin auth.** The `/train` endpoint is admin-only. Added alembic migration `150a555cf5a9_seed_exp2_admin_user.py` that idempotently seeds `exp2-admin@hv.local` with a known password (configurable via `EXP2_ADMIN_EMAIL` / `EXP2_ADMIN_PASSWORD` env vars). `api_client.py` uses the same defaults so dev "just works".
+4. **Mutex-production invariant not fully enforced.** Initially the rotation only ran against `model_registry`; `model_version.stage` was hard-coded to `PRODUCTION` on every insert and never demoted (16 versions all flagged `PRODUCTION` while the registry table cleanly held 1/15). Although user-facing inference reads `model_registry` and so was unaffected, the version table looked stale. Fixed by extending `_archive_prior_productions` to cascade the demotion onto linked `ModelVersion` rows in the same transaction; back-filled historical rows with one UPDATE. See §7.4 for the post-fix snapshot.
 
 ### 7.6 Charts
 

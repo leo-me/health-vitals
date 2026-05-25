@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.models.model_registry import ModelRegistry
-from app.models.model_version import ModelStage
+from app.models.model_version import ModelStage, ModelVersion
 from app.schemas.model_registry import ModelRegistryCreate
 
 
@@ -81,8 +81,12 @@ def _archive_prior_productions(
   except_id: UUID | None,
 ) -> int:
   """Set stage=ARCHIVED on every PRODUCTION row with the given model_name,
-  except (optionally) the row identified by except_id. Returns count touched.
-  Caller is responsible for committing the surrounding transaction."""
+  except (optionally) the row identified by except_id. Cascades the same
+  demotion to each row's linked ModelVersion so model_version.stage stays
+  consistent with model_registry.stage — the registry table is the source
+  of truth for "which model is in production", and the version table just
+  mirrors it. Returns the count of registry rows touched. Caller is
+  responsible for committing the surrounding transaction."""
   q = (
     db.query(ModelRegistry)
       .filter(ModelRegistry.model_name == model_name)
@@ -90,4 +94,21 @@ def _archive_prior_productions(
   )
   if except_id is not None:
     q = q.filter(ModelRegistry.id != except_id)
-  return q.update({ModelRegistry.stage: ModelStage.ARCHIVED}, synchronize_session=False)
+
+  # Snapshot version_ids before the UPDATE collapses them. None entries are
+  # possible if a registry row was inserted without a linked version — skip
+  # those rather than blowing up the IN-clause.
+  version_ids = [r.version_id for r in q.all() if r.version_id is not None]
+
+  n_registries = q.update(
+    {ModelRegistry.stage: ModelStage.ARCHIVED},
+    synchronize_session=False,
+  )
+
+  if version_ids:
+    db.query(ModelVersion).filter(ModelVersion.id.in_(version_ids)).update(
+      {ModelVersion.stage: ModelStage.ARCHIVED},
+      synchronize_session=False,
+    )
+
+  return n_registries
