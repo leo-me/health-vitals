@@ -36,8 +36,8 @@ plt.rcParams.update({
 })
 
 PHASES = [
-    ("phase1", "Phase 1 — smart_watch (cheap query)",  ""),           # prefix=""
-    ("phase2", "Phase 2 — overview (heavy aggregate)", "overview_"),
+    ("phase1", "Phase 1 — cheap (1× LIMIT 1)",          "cheap_"),
+    ("phase2", "Phase 2 — overview (heavy aggregate)",  "overview_"),
 ]
 LEVELS  = [1, 10, 50]
 LEVEL_LABELS = [f"u={u}" for u in LEVELS]
@@ -150,9 +150,9 @@ for u in LEVELS:
     speedups_p2.append(off2 / on2 if on2 > 0 else float("nan"))
 
 b1 = ax.bar(x - width/2, speedups_p1, width,
-            label="Phase 1 (smart_watch)", color="#55A868", edgecolor="white")
+            label="Phase 1 (cheap)",    color="#55A868", edgecolor="white")
 b2 = ax.bar(x + width/2, speedups_p2, width,
-            label="Phase 2 (overview)",    color="#C44E52", edgecolor="white")
+            label="Phase 2 (overview)", color="#C44E52", edgecolor="white")
 for bar, val in [(b1, speedups_p1), (b2, speedups_p2)]:
     for rect, v in zip(bar, val):
         h = rect.get_height()
@@ -236,7 +236,7 @@ plt.close(fig)
 
 fig = plt.figure(figsize=(18, 12))
 fig.suptitle(
-    "Exp 1 — Redis Cache Layer · Phase 1 (smart_watch) vs Phase 2 (overview)\n"
+    "Exp 1 — Redis Cache Layer · Phase 1 (cheap) vs Phase 2 (overview)\n"
     "12 runs · 3 concurrency × 2 cache states × 2 phases · 60 s each · 25 users · "
     "infra-db (6.75M sensor_recording rows)",
     fontsize=12, fontweight="bold", y=0.995,
