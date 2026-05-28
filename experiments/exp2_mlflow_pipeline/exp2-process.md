@@ -76,3 +76,8 @@
                  │ GET /train/{id}    │
                  │   returns summary  │
                  └────────────────────┘
+
+
+1. This is a supervised learning pipeline, but operating on a fully synthetic dataset where the label is drawn independently of the features. So the experiment exercises the engineering loop end-to-end — training, retraining, registration, dual-write — but does not (and cannot) demonstrate predictive performance. The accuracy values hovering around 0.55–0.59 reflect the class prior (60% positive), not classifier skill.
+
+2. To make the same pipeline meaningful, the only thing that needs to change is the data source: swap mode=simulation for mode=production and load real Empatica E4 readings with real stress task labels.

@@ -47,28 +47,44 @@ _ADAPTERS = {
 }
 
 
-def _latest(db: Session, user_id: UUID, sensor_type: SensorType) -> Optional[SensorRecording]:
-    return (
+_SENSOR_TYPES = (
+    SensorType.HEART_RATE,
+    SensorType.EDA,
+    SensorType.BVP,
+    SensorType.ACC,
+    SensorType.IBI,
+    SensorType.TEMP,
+)
+
+
+def _latest_per_sensor(db: Session, user_id: UUID) -> dict[SensorType, SensorRecording]:
+    # Single round-trip: DISTINCT ON (sensor_type) ordered by timestamp DESC
+    # returns the most recent row for each sensor type in one query.
+    rows = (
         db.query(SensorRecording)
         .filter(
             SensorRecording.user_id == user_id,
-            SensorRecording.sensor_type == sensor_type,
+            SensorRecording.sensor_type.in_(_SENSOR_TYPES),
         )
-        .order_by(SensorRecording.timestamp.desc())
-        .first()
+        .distinct(SensorRecording.sensor_type)
+        .order_by(SensorRecording.sensor_type, SensorRecording.timestamp.desc())
+        .all()
     )
+    return {r.sensor_type: r for r in rows}
 
 
 def _build_sensor_data(db: Session, user_id: UUID) -> Optional[SensorData]:
-    hr_rec = _latest(db, user_id, SensorType.HEART_RATE)
+    by_type = _latest_per_sensor(db, user_id)
+
+    hr_rec = by_type.get(SensorType.HEART_RATE)
     if hr_rec is None:
         return None
 
-    eda_rec  = _latest(db, user_id, SensorType.EDA)
-    bvp_rec  = _latest(db, user_id, SensorType.BVP)
-    acc_rec  = _latest(db, user_id, SensorType.ACC)
-    ibi_rec  = _latest(db, user_id, SensorType.IBI)
-    temp_rec = _latest(db, user_id, SensorType.TEMP)
+    eda_rec  = by_type.get(SensorType.EDA)
+    bvp_rec  = by_type.get(SensorType.BVP)
+    acc_rec  = by_type.get(SensorType.ACC)
+    ibi_rec  = by_type.get(SensorType.IBI)
+    temp_rec = by_type.get(SensorType.TEMP)
 
     acc_data = acc_rec.data if acc_rec else None
 

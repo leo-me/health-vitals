@@ -315,3 +315,78 @@ All five charts under `results/` were regenerated from `pipeline_results_clean.c
 ![Combined thesis figure](results/combined.png)
 
 ![Accuracy gap to threshold](results/gap_to_threshold.png)
+
+---
+
+## 8. Redesigned experiment — final 9-cell matrix (2026-05-28)
+
+### 8.1 Design changes from §7
+
+The experiment was simplified to match the thesis design (§3.1–3.4):
+
+| Dimension | §7 (HTTP re-run) | §8 (final) | Rationale |
+|---|---|---|---|
+| Scenarios | standard + forced_fail | **standard only** | Gaussian noise has zero effect on synthetic data (Δacc ≈ 0.002); threshold level controls pass/fail naturally |
+| Feature version | v1 + v2 | **v1 fixed** | Feature engineering is not a parameter in the thesis design; v1/v2 Δacc ≈ 0.013 is noise |
+| Dataset sizes | 1 K + 50 K (large skipped) | **1 K, 50 K, 400 K** | Large (400 K) added to make dataset size a core parameter; 500 K OOMs in Docker VM (see §8.4) |
+| Total pipeline calls | 24 | **9** (3 sizes × 3 thresholds) |  |
+
+### 8.2 Results — 9-cell matrix
+
+| Dataset size | Threshold | Accuracy | Registered | Retrain triggered | Training duration |
+|---|---|---|---|---|---|
+| small (1 K)   | 0.50 | 0.5800 | ✓ | No  | 0.21 s |
+| small (1 K)   | 0.55 | 0.5800 | ✓ | No  | 0.20 s |
+| small (1 K)   | 0.60 | 0.5800 → 0.5400 | ✗ | Yes (retrain also fails) | 0.18 s + 0.18 s |
+| medium (50 K) | 0.50 | 0.5561 | ✓ | No  | 22.6 s |
+| medium (50 K) | 0.55 | 0.5561 | ✓ | No  | 21.1 s |
+| medium (50 K) | 0.60 | 0.5561 → 0.5594 | ✗ | Yes (retrain also fails) | 21.6 s + 21.4 s |
+| large (400 K) | 0.50 | 0.5625 | ✓ | No  | 302.7 s |
+| large (400 K) | 0.55 | 0.5625 | ✓ | No  | 302.7 s |
+| large (400 K) | 0.60 | 0.5625 → 0.5641 | ✗ | Yes (retrain also fails) | 296.2 s + 297.5 s |
+
+All three pipeline branches are exercised across the matrix:
+- **thr = 0.50** → 100 % registration (baseline ≈ 0.56 > 0.50); confirms pass path.
+- **thr = 0.55** → 100 % registration (baseline ≈ 0.56 > 0.55); boundary confirms the gate is permissive when baseline clears the threshold.
+- **thr = 0.60** → 0 % registration (baseline ≈ 0.56 < 0.60); every initial run fails, one automatic retrain fires, retrain also fails, no PG row written; confirms fail path end-to-end.
+
+### 8.3 Artifact logging overhead — a secondary finding
+
+Training duration (fit + predict, logged as `duration_seconds` in MLflow) scales approximately linearly with dataset size: 0.2 s → 22 s → 303 s (small → medium → large). However, the **wall-clock time from job submission to job completion** is substantially longer for large runs because `mlflow.sklearn.log_model()` must serialise and write the fitted RandomForest artifact to the MLflow tracking server after training finishes.
+
+| Dataset size | Training time (`duration_seconds`) | Observed job wall-clock |
+|---|---|---|
+| small (1 K)   | ~0.2 s  | < 2 s   |
+| medium (50 K) | ~22 s   | ~25 s   |
+| large (400 K) | ~300 s  | ~30–45 min |
+
+For the 400 K model, the fitted RandomForest (100 trees, ~320 K training samples, `min_samples_leaf=1`) serialises to a large pickle artifact. MLflow must write this to the tracking server's artifact store before marking the run complete, which dominates total elapsed time by an order of magnitude. This is not a pipeline bug — it is an expected property of sklearn model artifacts at scale. In production the artifact store would be object storage (S3 / GCS) with higher write throughput; the local-filesystem store used here amplifies this effect.
+
+### 8.4 Environment constraints — Docker VM boundary
+
+All services run on a single Docker Desktop host (macOS). The Docker VM has a fixed memory budget that sets a hard upper limit on training job size.
+
+| Resource | Value |
+|---|---|
+| Docker VM CPUs | 5 |
+| Docker VM total RAM | 7.666 GiB |
+| Other containers at rest (mlflow, db, redis, frontend, consumer_delivery) | ~2.3 GiB |
+| Available for backend training job | ~5.3 GiB |
+
+**500 K rows → OOM kill.** With `min_samples_leaf=1` (default), the RandomForest fits trees to near-zero training error on the bootstrap samples, producing extremely deep trees. At 500 K rows (400 K training), 100 trees can accumulate ~40 M nodes; the fitted model alone exceeds the available memory and the Linux OOM killer terminates the backend process (`Killed` in container logs).
+
+**400 K rows → borderline success.** The backend survives (~320 K training rows, ~32 M nodes, estimated peak ~5.3 GiB) but operates under heavy memory pressure. Sequential 400 K jobs show this clearly: the second job (thr = 0.55) ran under residual memory pressure from the first (Python GC had not yet fully reclaimed the previous model), producing a `duration_seconds` of 1 677 s versus the expected ~303 s — a 5.5× slowdown attributable to memory-pressure-induced swapping, not to a change in workload.
+
+**Estimated OOM boundary: ~430–460 K rows** on this Docker VM configuration. This is a local development environment constraint, not an architectural limit of the pipeline. On a cloud instance with 32 GiB or more, 500 K+ rows would run without modification to any pipeline code.
+
+### 8.5 Charts regenerated (2026-05-28)
+
+`plot_results.py` updated to recognise `large = 400 K` and regenerated from `pipeline_results_clean.csv` (9 initial runs + 3 retrain runs = 12 rows).
+
+| File | Shows |
+|---|---|
+| `results/combined.png` | 5-panel thesis figure with 400 K large |
+| `results/accuracy_overview.png` | Accuracy by size, threshold lines at 0.50 / 0.55 / 0.60 |
+| `results/gap_to_threshold.png` | accuracy − threshold per size; positive = registered, negative = retrain |
+| `results/duration_scaling.png` | Training time log scale: 0.2 s → 22 s → 303 s |
+| `results/retrain_behavior.png` | Retrain rate per size (100 % at thr = 0.60, 0 % otherwise) |

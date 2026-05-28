@@ -31,7 +31,7 @@ ADMIN_PASSWORD = os.environ.get("EXP2_ADMIN_PASSWORD", "exp2-admin-changeme")
 # Large dataset (500k rows) RF fit takes ~minutes on a laptop. 600s is the
 # same headroom training_jobs uses for in-memory job retention.
 POLL_INTERVAL_S = 1.0
-POLL_TIMEOUT_S  = 600
+POLL_TIMEOUT_S  = 1800   # 400K RF + MLflow artifact logging takes ~15-20 min
 
 
 def login() -> str:
@@ -77,17 +77,24 @@ def trigger_training(
 
 
 def wait_for_result(token: str, job_id: str) -> dict[str, Any]:
-    """Poll GET /train/{job_id} until status leaves pending/running."""
+    """Poll GET /train/{job_id} until status leaves pending/running.
+
+    Retries on transient connection errors (RemoteProtocolError, ConnectError)
+    which can occur during long-running large-dataset training jobs.
+    """
     deadline = time.time() + POLL_TIMEOUT_S
     headers  = {"Authorization": f"Bearer {token}"}
     url      = f"{BACKEND_URL}/api/v1/train/{job_id}"
 
     while time.time() < deadline:
-        r = httpx.get(url, headers=headers, timeout=10)
-        r.raise_for_status()
-        job = r.json()
-        if job["status"] in ("succeeded", "failed"):
-            return job
+        try:
+            r = httpx.get(url, headers=headers, timeout=15)
+            r.raise_for_status()
+            job = r.json()
+            if job["status"] in ("succeeded", "failed"):
+                return job
+        except (httpx.RemoteProtocolError, httpx.ConnectError, httpx.ReadError):
+            pass  # transient drop during long training — retry after interval
         time.sleep(POLL_INTERVAL_S)
 
     raise TimeoutError(f"job {job_id} did not finish in {POLL_TIMEOUT_S}s")
