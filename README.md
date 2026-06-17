@@ -9,8 +9,7 @@ The healthcare project has completed its initial research cycle, validating desi
 
 
 # Data source
-Sample data from [Campanella et al., 2024](https://data.mendeley.com/datasets/kb42z77m2g/2),
-licensed under CC BY 4.0.
+Sample data from [Campanella et al., 2024](https://data.mendeley.com/datasets/kb42z77m2g/2),licensed under CC BY 4.0.
 
 
 ## Tech Stack
@@ -32,7 +31,7 @@ licensed under CC BY 4.0.
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js (React) |
+| Framework | Next.ts (React) |
 | Styling | Tailwind CSS |
 | State Management | Zustand |
 | HTTP Client | Axios |
@@ -144,35 +143,35 @@ The diagram below shows the full Sensors2Care platform architecture. The `health
   │   └── Dockerfile
   ├── frontend/
   │   ├── app/
-  │   │   ├── layout.jsx              # Root layout
-  │   │   ├── page.jsx                # Home / redirect to login
+  │   │   ├── layout.tsx              # Root layout
+  │   │   ├── page.tsx                # Home / redirect to login
   │   │   ├── login/
-  │   │   │   └── page.jsx
+  │   │   │   └── page.tsx
   │   │   ├── dashboard/
-  │   │   │   └── page.jsx
+  │   │   │   └── page.tsx
   │   │   ├── analytics/
-  │   │   │   └── page.jsx
+  │   │   │   └── page.tsx
   │   │   └── settings/
-  │   │       └── page.jsx
+  │   │       └── page.tsx
   │   ├── components/
-  │   │   ├── Dashboard.jsx
-  │   │   ├── DataTable.jsx
-  │   │   ├── ChartWidget.jsx
-  │   │   └── UserMenu.jsx
+  │   │   ├── Dashboard.tsx
+  │   │   ├── DataTable.tsx
+  │   │   ├── ChartWidget.tsx
+  │   │   └── UserMenu.tsx
   │   ├── hooks/
-  │   │   ├── useAuth.js
-  │   │   └── useHealthData.js
+  │   │   ├── useAuth.ts
+  │   │   └── useHealthData.ts
   │   ├── services/
-  │   │   └── api.js
+  │   │   └── api.ts
   │   ├── store/
-  │   │   └── store.js
+  │   │   └── store.ts
   │   ├── styles/
   │   │   └── globals.css
   │   ├── public/
   │   ├── .env.example
   │   ├── package.json
-  │   ├── next.config.js
-  │   ├── tailwind.config.js
+  │   ├── next.config.ts
+  │   ├── tailwind.config.ts
   │   ├── Dockerfile
   │   └── README.md
   ├── infra/
