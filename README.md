@@ -14,7 +14,7 @@ Sample data from [Campanella et al., 2024](https://data.mendeley.com/datasets/kb
 
 ## Tech Stack
 
-**Backend**
+**Backend ｜ Consumer layer**
 
 | Layer | Technology |
 |---|---|
@@ -27,7 +27,7 @@ Sample data from [Campanella et al., 2024](https://data.mendeley.com/datasets/kb
 | Containerization | Docker + Docker Compose |
 | CI | GitHub Actions |
 
-**Frontend** *(planned — not yet implemented)*
+**Frontend***
 
 | Layer | Technology |
 |---|---|
