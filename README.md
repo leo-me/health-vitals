@@ -1,4 +1,4 @@
-# Sensors2Care
+# Health vitals
 
 A wearable health data platform for stress monitoring and prediction in patients with dementia or persistent physical symptoms. The platform ingests sensor readings from wearable devices, stores and processes them, and delivers health insights to heterogeneous consumers — smartwatch, web dashboard, researcher tools, and ML pipelines — through a dedicated **Consumer Delivery Layer (CDL)**.
 
@@ -80,7 +80,7 @@ Create `infra/.env`:
 ```env
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=changeme
-POSTGRES_DB=sensors2care
+POSTGRES_DB=health_vitals
 SECURITY_KEY=your-secret-key
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
