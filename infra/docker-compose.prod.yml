@@ -1,0 +1,138 @@
+# Production Compose file for Sensors2Care.
+#
+# Key differences from docker-compose.yml (local):
+#   - MLflow uses S3 for artifact storage and managed PostgreSQL for metadata.
+#   - No bind-mounted local volumes (mlruns/).
+#   - All secrets come from environment variables — populate via .env.prod or
+#     your cloud secret manager before running.
+#
+# Startup order is enforced via depends_on + healthchecks:
+#   PostgreSQL / Redis → MLflow → backend (runs migrations) → CDL → frontend
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    # Do not expose 5432 publicly — services communicate on the internal network.
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow
+    restart: always
+    environment:
+      # --- Object storage (S3 or S3-compatible) ---
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ${AWS_REGION}
+      # Allow Docker-network hostnames in Host headers (MLflow 3.x host-header guard).
+      MLFLOW_SERVER_ALLOWED_HOSTS: "mlflow:*,mlflow,localhost:*,localhost,127.0.0.1:*,127.0.0.1"
+    command: >
+      mlflow server
+        --host 0.0.0.0
+        --port 5000
+        --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+        --default-artifact-root s3://${MLFLOW_S3_BUCKET}/mlflow-artifacts/
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 20s
+    # Expose only if you need external access to the MLflow UI.
+    # Remove this block to keep MLflow internal-only.
+    ports:
+      - "5004:5000"
+
+  backend:
+    image: ${BACKEND_IMAGE}     # e.g. ghcr.io/your-org/sensors2care-backend:latest
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      SECURITY_KEY: ${SECURITY_KEY}
+      ALGORITHM: ${ALGORITHM}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT: sensors2care_registry
+      MLFLOW_MODEL_NAME: SensorsCarePipeline
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 30s
+    ports:
+      - "8000:8000"
+
+  consumer_delivery:
+    image: ${CDL_IMAGE}         # e.g. ghcr.io/your-org/sensors2care-cdl:latest
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_ENABLED: ${CACHE_ENABLED:-true}
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_MODEL_NAME: SensorsCarePipeline
+      MODEL_META_TTL_SECONDS: "30"
+    # CDL carries no migration runner — it depends on the backend having already
+    # applied all Alembic migrations before this service starts.
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+    ports:
+      - "8001:8001"
+
+  frontend:
+    image: ${FRONTEND_IMAGE}    # e.g. ghcr.io/your-org/sensors2care-frontend:latest
+    restart: always
+    environment:
+      BACKEND_BASE_URL: http://backend:8000
+      CDL_BASE_URL: http://consumer_delivery:8001
+    depends_on:
+      backend:
+        condition: service_healthy
+      consumer_delivery:
+        condition: service_started
+    ports:
+      - "3000:3000"
+
+volumes:
+  pg_data:

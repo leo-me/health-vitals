@@ -1,16 +1,43 @@
- # health_vitals
-Health_vitals design for a healthcare project. It handles sensor data ingestion, user management, alert triggering, and role-based access control — built with **FastAPI** + **PostgreSQL**, containerized with Docker, and designed for integration with wearable devices and downstream ML prediction services.
+# Sensors2Care
 
+A wearable health data platform for stress monitoring and prediction in patients with dementia or persistent physical symptoms. The platform ingests sensor readings from wearable devices, stores and processes them, and delivers health insights to heterogeneous consumers — smartwatch, web dashboard, researcher tools, and ML pipelines — through a dedicated **Consumer Delivery Layer (CDL)**.
 
-# background
- This wearable-based platform for stress monitoring and prediction in patients with dementia or persistent physical symptoms.
+Sample data from [Campanella et al., 2024](https://data.mendeley.com/datasets/kb42z77m2g/2), licensed under CC BY 4.0.
 
-The healthcare project has completed its initial research cycle, validating design requirements through prototype development and early-stage evaluation. This backend service supports the next phase of that work: reliable data ingestion from wearable sensors, structured storage, and delivery of stress-related health signals to clinical consumers.
+---
 
+## Architecture
 
-# Data source
-Sample data from [Campanella et al., 2024](https://data.mendeley.com/datasets/kb42z77m2g/2),licensed under CC BY 4.0.
+```
+Wearable / Mobile App
+        │
+        ▼
+  ┌─────────────┐     ┌─────────────┐
+  │   Backend   │────▶│   MLflow    │  model registry
+  │  (FastAPI)  │     │  (sidecar)  │
+  └─────┬───────┘     └─────────────┘
+        │ shared PostgreSQL
+        ▼
+  ┌─────────────┐     ┌─────────────┐
+  │     CDL     │────▶│    Redis    │  cache / broker
+  │  (FastAPI)  │     └─────────────┘
+  └─────┬───────┘
+        │ Adapter pattern
+   ┌────┴────────────────────┐
+   ▼         ▼         ▼     ▼
+ Watch   Dashboard  Researcher  ML Pipeline
+```
 
+| Service | Role |
+|---|---|
+| **Backend** | Core API. Handles sensor ingestion, user management, alerts, RBAC. Runs Alembic migrations on startup and loads registered ML models from MLflow at runtime. |
+| **MLflow** | ML model registry (sidecar). Backend connects to it at `http://mlflow:5000`. Currently uses local file storage; see [cloud deployment guide](infra/docker-compose.prod.yml) to migrate to S3. |
+| **CDL** | Consumer Delivery Layer. Formats and routes health insights to each consumer type via the Adapter pattern. Shares the PostgreSQL instance with the backend — depends on backend running migrations first. |
+| **PostgreSQL** | Shared relational database. Schema managed by Alembic (backend-owned). |
+| **Redis** | Cache and message broker used by the CDL. |
+| **Frontend** | Next.js web dashboard for clinicians and caregivers. |
+
+---
 
 ## Tech Stack
 
@@ -18,12 +45,13 @@ Sample data from [Campanella et al., 2024](https://data.mendeley.com/datasets/kb
 
 | Layer | Technology |
 |---|---|
-| Framework | FastAPI |
-| Database | PostgreSQL 16 |
-| ORM | SQLAlchemy |
-| Migrations | Alembic |
+| Backend API | FastAPI |
+| CDL | FastAPI + Adapter pattern |
+| Frontend | Next.js (React), Tailwind CSS, Zustand |
+| Database | PostgreSQL 16 + SQLAlchemy + Alembic |
+| Cache / Broker | Redis 7 |
+| ML Registry | MLflow |
 | Auth | JWT (HS256) |
-| Testing | pytest |
 | Containerization | Docker + Docker Compose |
 | CI | GitHub Actions |
 
@@ -38,220 +66,96 @@ Sample data from [Campanella et al., 2024](https://data.mendeley.com/datasets/kb
 
 ---
 
-
-## System Architecture
-
-The diagram below shows the full Sensors2Care platform architecture. The `health_vitals` service functions as the core backend, receiving data from sensors via the mobile app and EventHub, persisting recordings and alerts, and exposing APIs to the web dashboard and third-party consumers.
-
-> ⚠️ Architecture diagram is a work in progress and will be updated as the project evolves.
-
-![System Architecture](./docs/architecture/workflow.drawio.svg)
-
----
-
-
-# file architecture
-
-  ```
-  apps/
-  ├── backend/
-  │   ├── app/
-  │   │   ├── __init__.py
-  │   │   ├── main.py                 # entry
-  │   │   ├── api/
-  │   │   │   ├── __init__.py
-  │   │   │   ├── v1/
-  │   │   │   │   ├── __init__.py
-  │   │   │   │   ├── api.py          # route summary
-  │   │   │   │   └── endpoints/  # handle http requests
-  │   │   │   │       ├── __init__.py
-  │   │   │   │       ├── sensor_recording.py   # sensor data API
-  │   │   │   │       ├── users.py    # users API
-  │   │   │   │       ├── alerts.py   # alert API
-  │   │   │   │       ├── device.py   # device API
-  │   │   │   │       └── analytics.py # analysis API
-  │   │   │   └── deps.py             # dependency injection
-  │   │   ├── crud/
-  │   │   │   ├── __init__.py
-  │   │   │   ├── base.py             # basic CRUD Generic approach
-  │   │   │   ├── crud_user.py
-  │   │   │   ├── crud_health_data.py
-  │   │   │   └── crud_alert.py
-  │   │   ├── models/
-  │   │   │   ├── __init__.py
-  │   │   │   ├── base.py             # 
-  │   │   │   ├── user.py             # User ORM model
-  │   │   │   ├── health.py           # HealthData ORM model
-  │   │   │   └── alert.py            # Alert ORM model
-  │   │   ├── schemas/
-  │   │   │   ├── __init__.py
-  │   │   │   ├── user.py             # User Pydantic model
-  │   │   │   ├── health.py           # HealthData Pydantic model
-  │   │   │   └── alert.py            # Alert Pydantic model
-  │   │   ├── services/
-  │   │   │   ├── __init__.py
-  │   │   │   ├── health_service.py   # health data processing logic
-  │   │   │   ├── alert_service.py    # alert rule logic
-  │   │   │   └── s3_service.py       # AWS S3 file upload
-  │   │   ├── core/
-  │   │   │   ├── __init__.py
-  │   │   │   ├── config.py           # configuration management
-  │   │   │   ├── security.py         # JWT + password processing
-  │   │   │   ├── constants.py        # Constant
-  │   │   │   └── exceptions.py       # Custom Exception
-  │   │   ├── db/
-  │   │   │   ├── __init__.py
-  │   │   │   ├── base.py             # Base class
-  │   │   │   ├── session.py          # define database connection
-  │   │   │   └── init_db.py          # create table and insert initial data
-  │   │   ├── middleware/
-  │   │   │   ├── __init__.py
-  │   │   │   ├── logging.py          # log middleware
-  │   │   │   └── cors.py             # CORS configuration
-  │   │   └── utils/
-  │   │       ├── __init__.py
-  │   │       ├── logger.py           # log tools
-  │   │       └── validators.py       # data validation tools
-  │   ├── tests/
-  │   │   ├── __init__.py
-  │   │   ├── conftest.py             # Pytest configuration
-  │   │   ├── test_api.py.            # endpoint tests
-  │   │   └── test_services.py.       # service logic tests
-  │   ├── migrations/                 # Alembic database version control
-  │   │   ├── alembic.ini             # configuration
-  │   │   ├── env.py                  # connect to models
-  │   │   └── versions/
-  │   ├── .env                        # env
-  │   ├── requirements.txt            # Python dependency
-  │   ├── dependencies.py             # dependency injection
-  │   ├── Dockerfile
-  │   ├── docker-compose.yml
-  │   ├── pytest.ini
-  │   ├── .gitignore
-  │   └── README.md
-  ├── consumer_delivery/
-  │   ├── main.py              #  FastAPI entry
-  │   ├── api/
-  │   │   └── v1/
-  │   │       └── stress.py    # consumer endpoint
-  │   ├── services/
-  │   │   └── delivery.py      # get data from backend, format data
-  │   ├── schemas/
-  │   │   └── output.py        # Consumer-facing's response schema (Decoupled from backend)
-  │   ├── core/
-  │   │   └── config.py
-  │   └── Dockerfile
-  ├── frontend/
-  │   ├── app/
-  │   │   ├── layout.tsx              # Root layout
-  │   │   ├── page.tsx                # Home / redirect to login
-  │   │   ├── login/
-  │   │   │   └── page.tsx
-  │   │   ├── dashboard/
-  │   │   │   └── page.tsx
-  │   │   ├── analytics/
-  │   │   │   └── page.tsx
-  │   │   └── settings/
-  │   │       └── page.tsx
-  │   ├── components/
-  │   │   ├── Dashboard.tsx
-  │   │   ├── DataTable.tsx
-  │   │   ├── ChartWidget.tsx
-  │   │   └── UserMenu.tsx
-  │   ├── hooks/
-  │   │   ├── useAuth.ts
-  │   │   └── useHealthData.ts
-  │   ├── services/
-  │   │   └── api.ts
-  │   ├── store/
-  │   │   └── store.ts
-  │   ├── styles/
-  │   │   └── globals.css
-  │   ├── public/
-  │   ├── .env.example
-  │   ├── package.json
-  │   ├── next.config.ts
-  │   ├── tailwind.config.ts
-  │   ├── Dockerfile
-  │   └── README.md
-  ├── infra/
-  │   ├── docker-compose.yml          # local dev env
-  │   ├── docker-compose.prod.yml     # production env
-  │   ├── aws/
-  │   │   ├── terraform/              # IaC configuration
-  │   │   └── README.md
-  │   └── README.md
-  │
-  ├── docs/
-  │   ├── ARCHITECTURE.md             # architecture design document
-  │   ├── API.md                      # API document
-  │   ├── DEPLOYMENT.md               # infrastructure guideline
-  │   ├── DATABASE.md                 # database design
-  │   └── CONTRIBUTING.md             # contribution guideline
-  │
-  ├── .github/
-  │   └── workflows/
-  │       ├── backend-ci.yml          # backend CI/CD
-  │       └── frontend-ci.yml         # frontend CI/CD
-  │
-  ├── .gitignore
-  ├── README.md                       # Project Overview
-  └── LICENSE
-  ```
-
-
-
-
-# backend
-
-
-## About
-
-A backend REST API service for the Sensors2Care platform, handling sensor data ingestion, user management, alert triggering, and role-based access control.
-
-Built with **FastAPI** + **PostgreSQL**, containerized with Docker, and designed for integration with wearable health monitoring devices.
-
----
-
-# Consumer Delivery Layer
-
-The Consumer Delivery Layer is a lightweight FastAPI service responsible for exposing processed health insights to end users. It sits at the outermost edge of the health vitals platform, consuming inference results produced by the backend pipeline and serving them through a clean, versioned REST API.
-
----
-
-# frontend
-
-A web dashboard  designed for clinician or caregiver to manage the health vitals of the patients, Which provides patient management, trends, and alert records.
-
-
-
-## Getting Started
+## Quick Start (local)
 
 ### Prerequisites
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/)
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose v2](https://docs.docker.com/compose/)
+- Copy `.env.example` to `.env` and fill in the values (see below)
 
-### Run Locally
+### Environment variables
 
-```bash
-git clone https://github.com/your-username/health_vitals.git
-cd health_vitals
-docker-compose up --build
+Create `infra/.env`:
+
+```env
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=changeme
+POSTGRES_DB=sensors2care
+SECURITY_KEY=your-secret-key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+CACHE_ENABLED=true
 ```
 
-This will:
-1. Start a PostgreSQL 16 database
-2. Run Alembic migrations automatically
-3. Launch the FastAPI app at **http://localhost:8000**
+### Run
 
-API docs available at: **http://localhost:8000/docs**
+```bash
+cd infra
+docker compose up --build
+```
+
+Service startup order is enforced automatically:
+
+1. PostgreSQL + Redis start first
+2. MLflow starts
+3. Backend starts — runs `alembic upgrade head`, then launches API
+4. CDL starts — depends on backend having applied migrations
+5. Frontend starts
+
+| Service | Local URL |
+|---|---|
+| Backend API | http://localhost:8000 |
+| Backend docs | http://localhost:8000/docs |
+| CDL | http://localhost:8001 |
+| MLflow UI | http://localhost:5004 |
+| Frontend | http://localhost:3000 |
+
+---
+
+## Project Structure
+
+```
+health-vitals/
+├── apps/
+│   ├── backend/                    # Core FastAPI service
+│   │   ├── app/
+│   │   │   ├── api/v1/endpoints/   # sensor_recording, users, alerts, device, analytics
+│   │   │   ├── crud/               # Generic CRUD base + domain CRUDs
+│   │   │   ├── models/             # SQLAlchemy ORM models
+│   │   │   ├── schemas/            # Pydantic schemas
+│   │   │   ├── services/           # Business logic + S3 service
+│   │   │   ├── core/               # Config, security, constants, exceptions
+│   │   │   ├── db/                 # Session, base, init_db
+│   │   │   └── middleware/         # Logging, CORS
+│   │   ├── migrations/             # Alembic versions
+│   │   └── Dockerfile
+│   ├── consumer_delivery/          # CDL (Adapter pattern)
+│   │   ├── api/v1/stress.py        # Consumer endpoints
+│   │   ├── services/delivery.py    # Adapter dispatch
+│   │   ├── schemas/output.py       # Consumer-facing schemas
+│   │   └── Dockerfile
+│   └── frontend/                   # Next.js dashboard
+│       ├── app/                    # login, dashboard, analytics, settings
+│       ├── components/
+│       ├── hooks/
+│       └── Dockerfile
+├── infra/
+│   ├── docker-compose.yml          # Local development
+│   └── docker-compose.prod.yml     # Cloud deployment (S3 + managed DB)
+├── experiments/                    # Research notebooks and results
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── API.md
+│   ├── DEPLOYMENT.md
+│   └── DATABASE.md
+└── .github/workflows/              # CI/CD
+```
 
 ---
 
 ## API Examples
 
-### 1. Login
+### Login
 
 ```http
 POST /auth/login
@@ -260,17 +164,11 @@ Content-Type: application/x-www-form-urlencoded
 username=admin@example.com&password=secret
 ```
 
-**Response:**
 ```json
-{
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "bearer"
-}
+{ "access_token": "eyJ...", "token_type": "bearer" }
 ```
 
----
-
-### 2. Create a Sensor Recording
+### Submit a sensor recording
 
 ```http
 POST /sensor-recordings/
@@ -285,9 +183,7 @@ Content-Type: application/json
 }
 ```
 
----
-
-### 3. Trigger an Alert (auto or manual)
+### Trigger an alert
 
 ```http
 POST /alerts/
@@ -314,8 +210,20 @@ Content-Type: application/json
 
 ---
 
+## Cloud Deployment
 
+See [`infra/docker-compose.prod.yml`](infra/docker-compose.prod.yml) for the production Compose file, which configures:
 
+- MLflow backed by S3 (artifact store) and a managed PostgreSQL database (metadata store)
+- Environment variables sourced from a secrets manager or `.env.prod`
+- No bind-mounted local volumes
 
+Key deployment rule: **backend must start and complete migrations before CDL starts.** The CDL has no migration runner of its own.
 
-# API Document
+For full infrastructure guidance — prerequisite checklist, service startup order, MLflow local-vs-cloud differences, and known limitations — see the deployment document in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
+---
+
+## License
+
+Sample data: CC BY 4.0 ([Campanella et al., 2024](https://data.mendeley.com/datasets/kb42z77m2g/2))
